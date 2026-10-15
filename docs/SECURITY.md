@@ -27,8 +27,8 @@ Each command runs as:
   tests at `/acceptance` (read-only). `/work/.git` is hidden by an empty tmpfs;
 * `--clearenv` with a fixed allowlist of variables: no host environment, therefore no credentials or proxy settings;
 * `--die-with-parent` and `--new-session`; a wall-clock timeout and cooperative cancellation kill the process group;
-* rlimits: address space (memory), file size, open files, core dumps; cgroup v1 memory and **pids** limits per job when
-  the host allows it. `RLIMIT_NPROC` counts all processes of the shared sandbox uid, so it is only a host-wide backstop
+* rlimits: address space (memory), file size, open files, core dumps; cgroup memory and **pids** limits per job
+  (unified cgroup v2 hierarchy or legacy v1) when the worker runs as root and the host allows it. `RLIMIT_NPROC` counts all processes of the shared sandbox uid, so it is only a host-wide backstop
   when cgroups are enforced; without cgroups it falls back to the per-job value;
 * bounded output capture (head and tail kept).
 

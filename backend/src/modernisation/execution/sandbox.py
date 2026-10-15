@@ -9,7 +9,7 @@ Untrusted repository code (installation steps, test suites, generated patches) r
 * execution as a dedicated unprivileged host uid, so ``RLIMIT_NPROC`` is enforced and an escape from the
   namespaces lands in an unprivileged account
 * an empty environment: no host variables, therefore no credentials, are inherited
-* rlimits (address space, file size, open files, processes, core dumps) and cgroup v1 memory/pids limits
+* rlimits (address space, file size, open files, processes, core dumps) and cgroup (v2 or v1) memory/pids limits
   where the host allows it
 * a wall-clock timeout and cooperative cancellation that kill the whole process tree
 * bounded stdout/stderr capture (head and tail are kept)
@@ -130,33 +130,65 @@ class _BoundedReader(threading.Thread):
 
 
 class _CGroup:
-    """Best-effort cgroup v1 memory+pids limits (requires root on the host)."""
+    """Best-effort per-job memory and pids limits (requires root on the host).
 
-    def __init__(self, memory_mb: int, max_processes: int):
-        self.name = f"modernisation/{uuid.uuid4().hex[:12]}"
+    Supports the unified cgroup v2 hierarchy (current distributions, GitHub-hosted runners) and the legacy v1
+    hierarchy. When neither can be configured the job runs without a cgroup and ``enforced`` is False, so callers
+    fall back to rlimits only.
+    """
+
+    PARENT = "modernisation"
+
+    def __init__(self, memory_mb: int, max_processes: int, root: Path | None = None):
+        self.root = root or CGROUP_ROOT
+        self.leaf = uuid.uuid4().hex[:12]
         self.paths: list[Path] = []
         self.enforced = False
+        self.version: int | None = None
         if os.geteuid() != 0:
             return
         try:
-            mem = CGROUP_ROOT / "memory" / self.name
-            pids = CGROUP_ROOT / "pids" / self.name
-            if not (CGROUP_ROOT / "memory").is_dir() or not (CGROUP_ROOT / "pids").is_dir():
-                return
-            mem.mkdir(parents=True)
-            self.paths.append(mem)
-            (mem / "memory.limit_in_bytes").write_text(str(memory_mb * 1024 * 1024))
-            swap = mem / "memory.memsw.limit_in_bytes"
-            if swap.exists():
-                swap.write_text(str(memory_mb * 1024 * 1024))
-            pids.mkdir(parents=True)
-            self.paths.append(pids)
-            (pids / "pids.max").write_text(str(max_processes))
-            self.enforced = True
+            if (self.root / "cgroup.controllers").is_file():
+                self._setup_v2(memory_mb, max_processes)
+            elif (self.root / "memory").is_dir() and (self.root / "pids").is_dir():
+                self._setup_v1(memory_mb, max_processes)
         except OSError as exc:
             log.warning("cgroup limits unavailable", extra={"error": str(exc)})
             self.cleanup()
             self.enforced = False
+
+    def _setup_v1(self, memory_mb: int, max_processes: int) -> None:
+        mem = self.root / "memory" / self.PARENT / self.leaf
+        pids = self.root / "pids" / self.PARENT / self.leaf
+        mem.mkdir(parents=True)
+        self.paths.append(mem)
+        (mem / "memory.limit_in_bytes").write_text(str(memory_mb * 1024 * 1024))
+        swap = mem / "memory.memsw.limit_in_bytes"
+        if swap.exists():
+            swap.write_text(str(memory_mb * 1024 * 1024))
+        pids.mkdir(parents=True)
+        self.paths.append(pids)
+        (pids / "pids.max").write_text(str(max_processes))
+        self.version, self.enforced = 1, True
+
+    def _setup_v2(self, memory_mb: int, max_processes: int) -> None:
+        available = set((self.root / "cgroup.controllers").read_text().split())
+        if not {"memory", "pids"} <= available:
+            return
+        # Controllers must be enabled for children at every level; the shared parent holds no processes itself.
+        _enable_controllers(self.root)
+        parent = self.root / self.PARENT
+        parent.mkdir(exist_ok=True)
+        _enable_controllers(parent)
+        leaf = parent / self.leaf
+        leaf.mkdir()
+        self.paths.append(leaf)
+        (leaf / "memory.max").write_text(str(memory_mb * 1024 * 1024))
+        swap = leaf / "memory.swap.max"
+        if swap.exists():
+            swap.write_text("0")
+        (leaf / "pids.max").write_text(str(max_processes))
+        self.version, self.enforced = 2, True
 
     def attach_self(self) -> None:
         for path in self.paths:
@@ -165,6 +197,9 @@ class _CGroup:
     def cleanup(self) -> None:
         for path in self.paths:
             try:
+                kill = path / "cgroup.kill"  # v2 (Linux 5.14+): kills every process in the group atomically
+                if kill.exists():
+                    kill.write_text("1")
                 # move any stragglers out, then remove the group
                 procs = (path / "cgroup.procs").read_text().split() if (path / "cgroup.procs").exists() else []
                 for pid in procs:
@@ -175,6 +210,14 @@ class _CGroup:
             except OSError:
                 pass
         self.paths = []
+
+
+def _enable_controllers(cgroup: Path) -> None:
+    control = cgroup / "cgroup.subtree_control"
+    enabled = set(control.read_text().split()) if control.exists() else set()
+    missing = [c for c in ("memory", "pids") if c not in enabled]
+    if missing:
+        control.write_text(" ".join(f"+{c}" for c in missing))
 
 
 class Sandbox:

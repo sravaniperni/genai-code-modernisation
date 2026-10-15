@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 
 import httpx
 import pytest
@@ -240,3 +242,39 @@ def test_structured_output_gives_up_after_bounded_rounds():
 
 def test_extract_json_handles_prose():
     assert extract_json('Sure! {"a": {"b": 1}} hope that helps') == {"a": {"b": 1}}
+
+
+def _fake_cgroup2(root: Path, controllers: str = "cpuset cpu io memory pids") -> Path:
+    root.mkdir()
+    (root / "cgroup.controllers").write_text(controllers + "\n")
+    (root / "cgroup.subtree_control").write_text("cpu\n")
+    return root
+
+
+@pytest.mark.skipif(os.geteuid() != 0, reason="cgroup setup is only attempted as root")
+def test_cgroup_v2_limits_are_written_to_a_job_leaf(tmp_path: Path):
+    from modernisation.execution.sandbox import _CGroup
+
+    root = _fake_cgroup2(tmp_path / "cg")
+    group = _CGroup(memory_mb=64, max_processes=32, root=root)
+    assert group.enforced and group.version == 2
+    leaf = group.paths[0]
+    assert leaf.parent == root / "modernisation"
+    assert (leaf / "memory.max").read_text() == str(64 * 1024 * 1024)
+    assert (leaf / "pids.max").read_text() == "32"
+    # controllers enabled for children at the root and in the shared parent
+    assert (root / "cgroup.subtree_control").read_text() == "+memory +pids"
+    assert (root / "modernisation" / "cgroup.subtree_control").read_text() == "+memory +pids"
+    for name in ("memory.max", "pids.max", "cgroup.subtree_control"):
+        (leaf / name).unlink(missing_ok=True)
+    group.cleanup()
+    assert not leaf.exists() and (root / "modernisation").is_dir()
+
+
+@pytest.mark.skipif(os.geteuid() != 0, reason="cgroup setup is only attempted as root")
+def test_cgroup_v2_without_memory_controller_is_not_enforced(tmp_path: Path):
+    from modernisation.execution.sandbox import _CGroup
+
+    root = _fake_cgroup2(tmp_path / "cg", controllers="cpu io pids")
+    group = _CGroup(memory_mb=64, max_processes=32, root=root)
+    assert not group.enforced and group.paths == []

@@ -24,8 +24,10 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 scripts/build_wheelhouse.sh            # offline package mirror for sandboxed installs
 ```
 
-The data directory (`MODERNISATION_DATA_DIR`) and all its parents must be traversable (`o+x`) by uid 9100, because the
-sandbox user bind-mounts workspaces from it.
+The data directory (`MODERNISATION_DATA_DIR`), the wheelhouse (`MODERNISATION_WHEELHOUSE_DIR`) and all their parents
+must be traversable (`o+x`) by uid 9100, because the sandbox user bind-mounts them. A wheelhouse under a mode-750 home
+directory (for example `/home/runner` on GitHub-hosted runners) makes every environment build fail with "dependency
+environment could not be built".
 
 ## Configuration
 
