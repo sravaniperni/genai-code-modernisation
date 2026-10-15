@@ -147,3 +147,16 @@ def test_same_size_same_second_edit_is_detected(session: Session, sample_repo: P
     assert change.files_changed == ["src/inventory/pricing.py"]
     assert "BULK_THRESHOLD = 20" in change.diff
     ws.destroy()
+
+
+def test_source_repository_owned_by_another_user(session: Session, sample_repo: Path):
+    """Regression: in containers the API/worker uid differs from the source repository owner."""
+    import os
+
+    for root, dirs, files in os.walk(sample_repo):
+        for name in [*dirs, *files]:
+            os.lchown(os.path.join(root, name), 4242, 4242)
+    os.chown(sample_repo, 4242, 4242)
+    repo = register_local(session, "foreign-owner", str(sample_repo))
+    snap = index_commit(session, repo, "main")
+    assert snap.status == "ready" and snap.files_total == 8

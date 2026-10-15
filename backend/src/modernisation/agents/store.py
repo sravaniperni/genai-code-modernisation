@@ -49,6 +49,7 @@ def transition(
 ) -> Task:
     """Move ``task`` to ``target`` atomically; raises StaleTask if the row changed since it was read."""
     check_transition(task.state, target)
+    previous = task.state  # read before the ORM update synchronises the in-memory object
     conditions = [Task.id == task.id, Task.version == task.version]
     if lease_owner is not None:
         conditions.append(Task.lease_owner == lease_owner)
@@ -70,7 +71,6 @@ def transition(
     if result.rowcount != 1:  # type: ignore[attr-defined]
         session.rollback()
         raise StaleTask(f"task {task.id} changed concurrently; transition to {target} abandoned")
-    previous = task.state
     session.refresh(task)
     add_event(
         session,

@@ -142,6 +142,8 @@ def test_happy_path_bug_fix_to_review_and_local_publication(session: Session, re
     assert pub["kind"] == "local" and pub["branch"].startswith("modernisation/task-")
     # the branch exists in the platform mirror (never in the source repository)
     assert pub["branch"] in git_for(repo).branches()
+    transitions = [e.message.split(":")[0] for e in task_events(session, task.id) if e.kind == "state"]
+    assert transitions[:3] == ["QUEUED -> ANALYSING", "ANALYSING -> PLANNING", "PLANNING -> IMPLEMENTING"]
 
 
 def test_failed_checks_trigger_bounded_repair_with_test_feedback(session: Session, repo: Repository):

@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import tempfile
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,13 +27,51 @@ class GitError(RuntimeError):
         self.stderr = stderr
 
 
+PLATFORM_GITCONFIG = """[safe]
+\tdirectory = *
+[core]
+\tfsmonitor = false
+\thooksPath = /dev/null
+[protocol "file"]
+\tallow = always
+"""
+
+
+def platform_gitconfig() -> str:
+    """Path of the platform's global git config (owned by this uid, not writable by others).
+
+    Git strips GIT_CONFIG_COUNT/GIT_CONFIG_PARAMETERS from sub-processes such as upload-pack during local
+    clones, and only honours safe.directory from protected scopes, so a global config file is the reliable way
+    to apply these settings to every git process.
+    """
+    path = Path(tempfile.gettempdir()) / f"modernisation-gitconfig-{os.getuid()}"
+    try:
+        st = path.lstat()
+        if (
+            st.st_uid == os.getuid()
+            and not path.is_symlink()
+            and not st.st_mode & 0o022
+            and path.read_text() == PLATFORM_GITCONFIG
+        ):
+            return str(path)
+        path.unlink()
+    except FileNotFoundError:
+        pass
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(PLATFORM_GITCONFIG)
+    os.replace(tmp, path)
+    return str(path)
+
+
 def git_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     env = {
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
         "HOME": "/nonexistent",
         "GIT_TERMINAL_PROMPT": "0",
         "GIT_CONFIG_NOSYSTEM": "1",
-        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_GLOBAL": platform_gitconfig(),
         "GIT_ASKPASS": "/bin/false",
         "LC_ALL": "C",
     }
@@ -40,8 +79,20 @@ def git_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     for key in ("HTTPS_PROXY", "https_proxy", "NO_PROXY", "no_proxy", "SSL_CERT_FILE", "GIT_SSL_CAINFO"):
         if key in os.environ:
             env[key] = os.environ[key]
+    # Environment-scoped config reaches every git sub-process (e.g. upload-pack during a local clone),
+    # unlike "-c" on the command line. Source repositories and mirrors may be owned by another uid
+    # (API and worker containers), hence safe.directory; fsmonitor can never be enabled by a repository.
+    pairs: list[tuple[str, str]] = [("safe.directory", "*"), ("core.fsmonitor", "false")]
     if extra:
+        extra = dict(extra)
+        count = int(extra.pop("GIT_CONFIG_COUNT", "0"))
+        for i in range(count):
+            pairs.append((extra.pop(f"GIT_CONFIG_KEY_{i}"), extra.pop(f"GIT_CONFIG_VALUE_{i}")))
         env.update(extra)
+    env["GIT_CONFIG_COUNT"] = str(len(pairs))
+    for i, (key, value) in enumerate(pairs):
+        env[f"GIT_CONFIG_KEY_{i}"] = key
+        env[f"GIT_CONFIG_VALUE_{i}"] = value
     return env
 
 
@@ -54,7 +105,20 @@ def run_git(
     env: dict[str, str] | None = None,
     check: bool = True,
 ) -> subprocess.CompletedProcess[bytes]:
-    base = ["git", "-c", "core.hooksPath=/dev/null", "-c", "protocol.file.allow=always"]
+    # Every repository git touches here is a platform-created mirror or clone (API and worker may run as
+    # different uids, hence safe.directory). Hooks and fsmonitor are disabled so repository content can
+    # never make git execute commands.
+    base = [
+        "git",
+        "-c",
+        "core.hooksPath=/dev/null",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "safe.directory=*",
+        "-c",
+        "protocol.file.allow=always",
+    ]
     proc = subprocess.run(
         base + args,
         cwd=cwd,
