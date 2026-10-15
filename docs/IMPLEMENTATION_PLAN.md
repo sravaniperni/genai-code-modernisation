@@ -7,7 +7,7 @@ This plan was written after auditing the repository and the execution environmen
 | Item | Finding |
 | --- | --- |
 | Repository | `sravaniperni/genai-code-modernisation`, one commit (`Initial commit`) containing `README.md`, `LICENSE` (MIT), `.gitignore` (Python template). No source code, tests or CI existed. |
-| Branch | Development branch `praveen/friendly-archimedes-04rb8u` (session-assigned); `main` untouched. |
+| Branch | Work happens on feature branches; `main` changes only through pull requests after CI passes. |
 | Machine | 4 vCPU, 15 GiB RAM, no GPU, Ubuntu 24.04, Linux 6.18. |
 | Python | 3.12.3 and 3.13 available; the platform targets 3.12. |
 | Node | 22.22, npm 10.9, pnpm, Playwright Chromium pre-installed. |
