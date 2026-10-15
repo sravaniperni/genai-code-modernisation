@@ -84,6 +84,10 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra --strict-markers"
+filterwarnings = [
+    # third-party deprecation inside starlette's test client; not actionable here
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 timeout = 300
 markers = [
     "postgres: requires a reachable PostgreSQL (DATABASE_URL)",
