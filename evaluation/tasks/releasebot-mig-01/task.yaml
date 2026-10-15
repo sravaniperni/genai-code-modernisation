@@ -1,0 +1,29 @@
+id: releasebot-mig-01
+repo: releasebot
+category: deprecated_api_migration
+split: dev
+title: Replace datetime.utcnow() and datetime.utcfromtimestamp()
+request: |
+  Since we moved CI to Python 3.12 the release jobs emit
+
+      DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future
+      version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+  and the same for `datetime.datetime.utcfromtimestamp()`. Our pipelines run with warnings turned into
+  errors, so planning a release currently fails. Please migrate releasebot away from both functions.
+
+  Expected behaviour afterwards:
+  - commit dates, tag dates and the release plan's `created_at` are timezone-aware datetimes in UTC
+    (an explicitly passed `now` in another time zone is fine, but the manifest must show it in UTC);
+  - the release manifest (`ReleasePlan.to_dict()` / `to_json()`) keeps its timestamp format exactly,
+    e.g. `"created_at": "2026-01-31T09:15:00Z"`;
+  - `days_since_previous` keeps working.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay switches commits.Commit.date and tags.Tag.date to utcfromtimestamp() and
+  release.utc_now() to utcnow(), with format_timestamp() appending "Z" to a naive isoformat(). A careless
+  migration produces "+00:00Z" timestamps or mixes naive and aware datetimes (TypeError in
+  days_since_previous); the acceptance tests (run with -W error::DeprecationWarning) catch both, check
+  awareness, normalisation of non-UTC input, and that the deprecated calls are gone from src/.

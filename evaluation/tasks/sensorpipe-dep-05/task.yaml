@@ -1,0 +1,24 @@
+id: sensorpipe-dep-05
+repo: sensorpipe
+category: dependency_upgrade
+split: heldout
+title: Upgrade pydantic to 2.10.6
+request: |
+  Upgrade pydantic from 1.10.21 to 2.10.6 and pin it exactly in requirements.txt.
+
+  The integration service that embeds sensorpipe has moved to pydantic 2 and pip can no longer install both.
+  Our internal mirror also carries pydantic-settings 2.7.1 in case you need it; pin anything you add exactly as
+  well.
+
+  Configuration handling must behave as it does today: pipeline configs load and validate the same way, invalid
+  configs raise ConfigError with a message naming the offending field, loaded configs are immutable, unknown
+  top-level keys are rejected, optional fields may be omitted, and runtime settings can still be overridden with
+  `SENSORPIPE_*` environment variables. Existing pipeline files in the field must keep loading; operators often
+  write numeric values for tags and source fields (for example `line: 4` or `device_id: 1042`), and these are
+  read as strings today.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  pydantic 2 breaks config.py at import: BaseSettings moved to pydantic-settings, Field(regex=) and a bare
+  @root_validator raise PydanticUserError. Behavioural changes also covered: Optional fields without defaults
+  become required, Config.allow_mutation is ignored (configs become mutable), numbers are no longer coerced to
+  str. Acceptance checks the pydantic version and all these behaviours through the public API.

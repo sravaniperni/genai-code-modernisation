@@ -1,0 +1,23 @@
+id: ledgerkit-bug-05
+repo: ledgerkit
+category: bug_fix
+split: heldout
+title: Entries out of balance by one minor unit are accepted
+request: |
+  The journal accepts entries that do not balance as long as the difference is exactly one minor unit
+  of the currency. For example an entry with a 100.00 USD debit and a 99.99 USD credit posts without
+  error, and so do JPY 1,000 against 999 and BHD 5.000 against 4.999. Afterwards the trial balance no
+  longer balances (total debits exceed total credits by 0.01), which our month-end checks catch only
+  weeks later.
+
+  Expected: `JournalEntry.validate()` / `Ledger.post()` raise `UnbalancedEntryError` whenever debits and
+  credits differ by an amount that would show up in the currency's minor unit — each currency of an
+  entry checked on its own. Only sub-minor-unit noise left over from currency conversion (less than half
+  a minor unit, e.g. a 33.333 debit against a 33.33 credit) may still be tolerated, as documented on
+  `validate()`. Rejected entries must not end up in the ledger.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup changes the tolerance check in JournalEntry.validate from "< half a minor unit" to
+  "<= one minor unit". Visible tests use a 10.00 difference and sub-cent noise only. Acceptance checks
+  one-unit differences in USD/JPY/BHD, a 0.006 difference, per-currency checks, tolerated noise and that
+  rejected entries are not posted.

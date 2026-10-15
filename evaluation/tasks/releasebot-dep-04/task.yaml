@@ -1,0 +1,20 @@
+id: releasebot-dep-04
+repo: releasebot
+category: dependency_upgrade
+split: heldout
+title: Upgrade Markdown to 3.7
+request: |
+  The documentation site and releasebot share one Python environment, and the docs toolchain now requires
+  Markdown 3.7. Please upgrade Markdown from 3.3.7 to 3.7 and pin it exactly in requirements.txt
+  (`Markdown==3.7`).
+
+  The HTML release notes must look the same afterwards: `#123` issue references and `@user` mentions
+  are still turned into links to the hosting service (with their `issue` / `user-mention` CSS classes),
+  while e-mail addresses, HTML entities and anything inside code spans or code blocks are left alone;
+  tables and fenced code blocks keep working.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Markdown 3.4 removed the 2.x extension API used by releasebot.notes.ReferenceExtension: the
+  md_globals argument of extendMarkdown, Registry.add() with "<not_strong" style locations, and
+  markdown.util.etree. Acceptance checks the pinned version and the link rendering (including
+  priority-sensitive cases: emphasis, code spans, entities) plus the full HTML notes page.

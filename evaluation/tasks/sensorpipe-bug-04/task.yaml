@@ -1,0 +1,23 @@
+id: sensorpipe-bug-04
+repo: sensorpipe
+category: bug_fix
+split: heldout
+title: Calibration crashes for a raw value equal to the top calibration point
+request: |
+  `CalibrationCurve.apply()` crashes with `IndexError: tuple index out of range` when the raw value is exactly the
+  highest calibration point.
+
+  Example: the bundled PT100 table tops out at 212.05 Ω (300 °C). `load_bundled_table("pt100").apply(212.05)`
+  raises the IndexError instead of returning 300.0, while the lowest point works
+  (`apply(80.31)` returns -50.0) and the vectorised `apply_array([212.05])` returns 300.0. We hit this on a
+  furnace loop that sits at the top of its calibrated range, and the whole batch was dropped. The same happens
+  for our own JSON calibration files and for curves with extrapolation enabled.
+
+  Expected: the highest calibration point is inside the calibrated range and maps to its reference value; values
+  above it are still rejected with CalibrationError (or extrapolated when the curve allows it), and the scalar and
+  array versions agree.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Setup switches the segment search in CalibrationCurve.apply from bisect_left to bisect_right, which overruns
+  the point tuple only when value == raw[-1]. Visible tests never hit the exact top point. Acceptance reproduces
+  the report and checks endpoint, interior-point and extrapolation behaviour against apply_array.

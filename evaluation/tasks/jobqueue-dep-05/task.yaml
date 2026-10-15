@@ -1,0 +1,21 @@
+id: jobqueue-dep-05
+repo: jobqueue
+category: dependency_upgrade
+split: heldout
+title: Upgrade arrow to 1.3.0
+request: |
+  We are still on arrow 0.17.0, which predates the 1.0 API freeze and is no longer maintained; the rest of
+  the organisation standardised on arrow 1.3. Upgrade arrow from 0.17.0 to 1.3.0 and pin it exactly in
+  requirements.txt (`arrow==1.3.0`).
+
+  Recurring schedules must keep working: `CronSchedule` must parse the same expressions, evaluate them in
+  their configured time zone and return the same next fire times (`next_after()` as aware UTC datetimes,
+  `next_timestamp()` as whole POSIX seconds), unknown time zones must still raise `InvalidSchedule`, and
+  `RecurringScheduler` must keep enqueuing each due fire time once, coalescing missed runs and recording the
+  fire time in the job payload.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  arrow 1.0 turned Arrow.timestamp from an int property into a float-returning method; the baseline uses the
+  property in CronSchedule.next_timestamp() and RecurringScheduler.tick(), so under 1.3 the scheduler
+  compares bound methods and fails. Acceptance checks the version, next_timestamp values and types,
+  time-zone handling (fixed dates away from DST changes), invalid zones and the scheduler's tick behaviour.

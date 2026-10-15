@@ -1,0 +1,25 @@
+id: webhookrelay-mig-03
+repo: webhookrelay
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated logging warn() calls
+request: |
+  Running the relay on Python 3.12 produces
+
+    DeprecationWarning: The 'warn' function is deprecated, use 'warning' instead
+    DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead
+
+  `logging.warn()` and `Logger.warn()` have been deprecated for a long time and are removed in Python 3.13,
+  which we want to move to next quarter. Please replace the remaining uses in the package.
+
+  The log output must not change: the same messages at WARNING level for unknown configuration keys,
+  for events that match no routing rule, and for failed delivery attempts (the ERROR-level "giving up"
+  message stays as it is).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Start state: config.load_config uses the module-level logging.warn() and Dispatcher uses log.warn() for
+  unrouted events and failed attempts. Acceptance (DeprecationWarning as error) triggers each path and checks
+  the WARNING/ERROR records and messages via caplog (any logger name is accepted), and that no warn() calls
+  remain in src.

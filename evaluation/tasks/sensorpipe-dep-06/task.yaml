@@ -1,0 +1,21 @@
+id: sensorpipe-dep-06
+repo: sensorpipe
+category: dependency_upgrade
+split: heldout
+title: Upgrade click to 8.1.8
+request: |
+  Upgrade click from 7.1.2 to 8.1.8 and pin it exactly in requirements.txt.
+
+  The operations tooling bundle that sensorpipe is installed into on the gateways has standardised on click 8.1,
+  and our click 7 pin blocks the installation.
+
+  The `sensorpipe` command line must behave exactly as today: commands can be chained in one invocation and the
+  run ends with the `-- N command(s) completed` line, errors are reported with exit code 1, summary lines are
+  truncated to the terminal width, and shell completion still offers the bundled calibration table names for
+  `calibrate --table`.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  cli.py uses Group.resultcallback, click.get_terminal_size and the autocompletion= option argument, all removed
+  in click 8.1 (import-time AttributeError/TypeError). Acceptance checks the installed version, chained output,
+  error handling, width-based truncation (COLUMNS) and that the --table option completes table names via
+  click 8's Parameter.shell_complete.

@@ -1,0 +1,27 @@
+id: sensorpipe-mig-06
+repo: sensorpipe
+category: deprecated_api_migration
+split: heldout
+title: Stop relying on sqlite3's default datetime adapter in the reading buffer
+request: |
+  On Python 3.12 the local store-and-forward buffer emits
+
+      DeprecationWarning: The default datetime adapter is deprecated as of Python 3.12; see the sqlite3
+      documentation for suggested replacement recipes
+
+  when readings are appended or purged, and the corresponding "default timestamp converter is deprecated" warning
+  when pending readings are read back. Our CI runs with DeprecationWarnings as errors. Please stop relying on
+  sqlite3's default datetime adapter and converter in `sensorpipe.buffer`.
+
+  Gateways in the field already hold buffer files written by the current release, so those files must remain
+  readable, and ordering of pending readings, `oldest_pending()` and `purge_before()` must keep working correctly
+  across rows written before and after the change. Timestamps handed out must remain timezone-aware UTC with
+  microsecond precision.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  buffer.py relies on the default datetime adapter (naive UTC stored as 'YYYY-MM-DD HH:MM:SS[.ffffff]') and on
+  PARSE_DECLTYPES with the default 'timestamp' converter, both deprecated in 3.12. Acceptance exercises append,
+  pending, oldest_pending and purge_before with warnings as errors, reads a buffer file written in the legacy
+  format, and mixes legacy and new rows (ordering and purge), so the stored text format must stay comparable.

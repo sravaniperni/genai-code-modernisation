@@ -1,0 +1,12 @@
+# sensorpipe calibration table: PT100 RTD (IEC 60751), resistance in ohm to temperature
+# format_version: 2.0.0
+# unit: degC
+raw,actual
+80.31,-50
+100.00,0
+119.40,50
+138.51,100
+157.33,150
+175.86,200
+194.10,250
+212.05,300

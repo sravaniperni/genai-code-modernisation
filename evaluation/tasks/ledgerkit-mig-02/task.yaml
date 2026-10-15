@@ -1,0 +1,32 @@
+id: ledgerkit-mig-02
+repo: ledgerkit
+category: deprecated_api_migration
+split: heldout
+title: Stop relying on sqlite3's deprecated default datetime adapters and converters
+request: |
+  Recording or querying the audit trail (`ledgerkit.audit.AuditLog`) on Python 3.12 emits
+
+      DeprecationWarning: The default datetime adapter is deprecated as of Python 3.12; see the sqlite3
+      documentation for suggested replacement recipes
+
+  plus the corresponding warnings for the default date adapter and the default "timestamp"/"date"
+  converters. These defaults are going away, and our CI now treats DeprecationWarnings as errors. Please
+  make the audit log handle its datetime/date values explicitly instead of relying on sqlite3's defaults.
+
+  Behaviour must not change:
+
+  * `events()` returns `at` as `datetime` (microseconds preserved) and `day` as `date`, oldest action
+    first; the `start`/`end` day filters are inclusive and combine with the `action` filter;
+  * `last_activity()` returns the most recent `at` as a `datetime`, or `None` for an empty log;
+  * audit databases written by earlier releases (values stored by the old default adapters, i.e.
+    `2024-01-05 08:00:00` / `2024-01-05 08:00:00.250000` and `2024-01-05`) must remain readable, and
+    events recorded into such a database afterwards must sort chronologically together with the old ones.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  AuditLog binds datetime/date objects (default adapters) and reads them back through PARSE_DECLTYPES /
+  PARSE_COLNAMES (default converters); all four are deprecated in 3.12. Reference solution stores the
+  same ISO text explicitly and parses with fromisoformat (registering explicit adapters/converters also
+  works). Acceptance runs with DeprecationWarnings as errors and checks types, ordering, filters,
+  last_activity and compatibility with a database written in the old format (mixed old/new rows).

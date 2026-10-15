@@ -1,0 +1,26 @@
+id: ledgerkit-dep-02
+repo: ledgerkit
+category: dependency_upgrade
+split: dev
+title: Upgrade PyJWT to 2.10.1
+request: |
+  Our dependency scanner blocks the next release because we still ship PyJWT 1.7.1 (unmaintained, and
+  every release before 2.4.0 is affected by CVE-2022-29217). Please upgrade PyJWT from 1.7.1 to 2.10.1
+  and pin it exactly (`PyJWT==2.10.1`) in requirements.txt.
+
+  Signed report exports (`ledgerkit.signing`) must keep working the same way after the upgrade:
+
+  * `sign_report()` returns the compact token as a `str` (HS256, issuer `ledgerkit`, optional expiry);
+  * `verify_report()` returns the embedded report and raises `SignatureError` for tampered tokens, wrong
+    keys, expired tokens and tokens from another issuer. Only HS256 is acceptable: tokens using any other
+    algorithm (including unsigned `alg: none` tokens) must be rejected with `SignatureError`;
+  * `read_unverified()` still returns all claims without checking signature or expiry, and raises
+    `SignatureError` for strings that are not tokens at all;
+  * reports signed by the current release (PyJWT 1.7.1) must still verify after the upgrade.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  PyJWT 2 returns str from jwt.encode (the .decode("ascii") call breaks), requires the `algorithms`
+  argument for jwt.decode (verification of every token fails with DecodeError -> SignatureError) and
+  dropped `verify=False` (use options={"verify_signature": False}). Acceptance checks the installed
+  version, round trips, rejection cases (tamper, key, expiry, issuer, alg none, HS512), unverified reads
+  and a token produced by the 1.7.1-based implementation.

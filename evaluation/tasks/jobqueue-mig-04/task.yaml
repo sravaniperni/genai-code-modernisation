@@ -1,0 +1,25 @@
+id: jobqueue-mig-04
+repo: jobqueue
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated datetime.utcnow and utcfromtimestamp
+request: |
+  `jobqueue.clock` builds its UTC timestamps with `datetime.utcnow()` and `datetime.utcfromtimestamp()`.
+  Both are deprecated since Python 3.12 (they emit `DeprecationWarning` and are scheduled for removal), so
+  with `-W error::DeprecationWarning` nothing that asks the system clock for the time works any more:
+  creating a `Job`, enqueuing, executing, converting timestamps.
+
+  Please migrate to the supported time-zone-aware APIs. Every timestamp jobqueue produces must stay an aware
+  datetime in UTC (offset zero) with the same values as before: `clock.utcnow()` / `SystemClock().now()`
+  return the current UTC time, `clock.from_timestamp()` converts POSIX timestamps (including fractions of a
+  second and timestamps before 1970) to aware UTC datetimes, and job creation, delays and completion times
+  computed from the system clock keep their meaning.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay makes clock.utcnow() use datetime.utcnow() and clock.from_timestamp() use
+  datetime.utcfromtimestamp(). Acceptance runs with DeprecationWarning as error and checks awareness, UTC
+  offset and values of utcnow/SystemClock (bracketed by datetime.now(timezone.utc)), from_timestamp for
+  fractional and negative timestamps, Job defaults, enqueue delays and executor completion times, plus a source
+  check for the two deprecated calls.

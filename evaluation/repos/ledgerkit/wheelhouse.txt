@@ -1,0 +1,40 @@
+# ledgerkit: baseline pins, every task's target pins and their transitive dependencies.
+# The file deliberately lists two versions of several distributions (old + upgrade target), so pip cannot
+# resolve it as a single requirement set; download it one line at a time with the AUTHORING.md flags.
+pytest==8.3.5
+iniconfig==2.3.1
+pluggy==1.7.0
+# pydantic (dep-03)
+pydantic==1.10.21
+pydantic==2.11.7
+pydantic-core==2.33.2
+annotated-types==0.8.0
+typing-inspection==0.4.4
+typing-extensions==4.16.0
+# SQLAlchemy (dep-04)
+SQLAlchemy==1.4.54
+SQLAlchemy==2.0.41
+greenlet==3.5.6
+# marshmallow (dep-05)
+marshmallow==3.26.1
+marshmallow==4.0.1
+# arrow (dep-06)
+arrow==0.17.0
+arrow==1.3.0
+python-dateutil==2.9.0.post0
+six==1.17.0
+types-python-dateutil==2.9.0.20260807
+# packaging (dep-07); pyparsing 3.1.4 is the newest release that does not emit DeprecationWarnings
+# when packaging 21.3's markers/requirements modules are imported
+packaging==21.3
+packaging==24.2
+pyparsing==3.1.4
+# semver (dep-08)
+semver==2.13.0
+semver==3.0.4
+# PyJWT (dep-02)
+PyJWT==1.7.1
+PyJWT==2.10.1
+# click (dep-01)
+click==7.1.2
+click==8.1.8

@@ -1,0 +1,21 @@
+id: jobqueue-bug-03
+repo: jobqueue
+category: bug_fix
+split: heldout
+title: Cron day-of-week fields fire one day late
+request: |
+  Recurring jobs restricted to particular weekdays run on the wrong day. Our "weekdays at 09:00" report
+  (`0 9 * * 1-5`) ran on Saturday morning and not on Monday, and `@weekly` jobs run on Monday instead of
+  Sunday.
+
+  Example: `CronSchedule("0 9 * * mon").next_after(datetime(2024, 3, 1, 10, 0, tzinfo=timezone.utc))` (a
+  Friday) returns Tuesday 2024-03-05 09:00 UTC; it should be Monday 2024-03-04 09:00 UTC. Day-of-week values
+  must follow standard cron numbering as documented in `CronSchedule`: 0 or 7 = Sunday, 1 = Monday ...
+  6 = Saturday, with the names `sun` ... `sat`, evaluated in the schedule's time zone, and when both
+  day-of-month and day-of-week are restricted a day matches if either does.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay compares the cron weekday set with datetime.weekday() (Monday = 0) instead of cron
+  numbering (Sunday = 0). Visible tests only use '*' in the day-of-week field. Acceptance checks numeric and
+  named weekdays, ranges, 0/7 for Sunday, @weekly, the day-of-month OR day-of-week rule, a non-UTC time zone
+  and the scheduler.

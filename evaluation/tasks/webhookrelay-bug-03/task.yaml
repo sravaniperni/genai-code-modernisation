@@ -1,0 +1,29 @@
+id: webhookrelay-bug-03
+repo: webhookrelay
+category: bug_fix
+split: heldout
+title: GitHub events arrive as type "unknown" and header routing rules never match
+request: |
+  We pointed a GitHub repository's webhooks at the relay (`POST /hooks/github`, source without a secret).
+  GitHub sends the event name and delivery id in the `X-GitHub-Event: push` and
+  `X-GitHub-Delivery: 72d3162e-cc78-11e3-81ab-4c9367dc0958` headers, which the relay is supposed to pick up,
+  but every event shows up as type `unknown` with a generated id, so our rule
+  `{"events": ["push"], "targets": ["ci"]}` never fires and everything ends up on the catch-all target.
+
+  We also have a rule `{"headers": {"x-env": "prod*"}, "targets": ["pager"]}` that never matches, even
+  though the requests carry `X-Env: production`. Our ingestion worker, which calls
+  `webhookrelay.payloads.normalise()` directly with the header dicts captured by our HTTP/2 ingress (header
+  names in lower case), has the same problem and on top of that every body is rejected with
+  `unsupported content type 'application/octet-stream'`.
+
+  HTTP header names are case-insensitive. Expected: the relay finds headers regardless of how their names
+  are capitalised: in event type/id detection, Content-Type detection, signature/timestamp/authorization
+  headers, and routing rule header conditions.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Injected defect (payloads.py): header_value() does an exact-case dict lookup. The app passes
+  dict(request.headers) to normalise(), and Werkzeug spells the GitHub header "X-Github-Event", so the type
+  and id headers are missed; lower-case rule header names and lower-case archived headers miss as well. The
+  visible tests only use canonical spellings. Acceptance covers GitHub delivery through the app,
+  lower/mixed-case header dicts in normalise(), routing header conditions, authenticate() and replay of an
+  archive with lower-case header names.

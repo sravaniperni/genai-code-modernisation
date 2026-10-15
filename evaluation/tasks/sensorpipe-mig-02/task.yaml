@@ -1,0 +1,24 @@
+id: sensorpipe-mig-02
+repo: sensorpipe
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated numpy aliases (product, cumproduct, alltrue)
+request: |
+  With numpy 1.26 our warnings-as-errors CI run fails in the calibration and resampling code:
+
+      DeprecationWarning: `product` is deprecated as of NumPy 1.25.0, and will be removed in NumPy 2.0.
+      Please use `prod` instead.
+
+  The same happens for `cumproduct` (cumulative gains) and `alltrue` (validation of series before resampling and
+  windowed statistics). Please replace these deprecated numpy aliases throughout sensorpipe; we stay on numpy
+  1.26 for now.
+
+  Results must not change: total and per-stage cumulative gains of a gain chain (an empty chain has a gain of 1.0
+  and no stages), and series validation (out-of-order or duplicate timestamps still raise ValueError).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  GainChain uses np.product/np.cumproduct and resample.as_series uses np.alltrue; all emit DeprecationWarning on
+  numpy 1.25+. Acceptance exercises GainChain, as_series, resample, window_stats and integrate with warnings as
+  errors (none of these paths use other deprecated APIs) and checks that the aliases are gone from src/.

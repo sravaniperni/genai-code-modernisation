@@ -1,0 +1,21 @@
+id: sensorpipe-bug-01
+repo: sensorpipe
+category: bug_fix
+split: dev
+title: Windowed statistics double-count readings on window boundaries
+request: |
+  `window_stats()` counts readings that fall exactly on a window boundary twice.
+
+  Example: a flow meter reports every 60 s from 00:00:00 to 00:20:00 (21 readings, epoch seconds 0, 60, ...,
+  1200) and we compute 10-minute windows (`width=600`). We get three windows with counts 11, 11 and 1, i.e. 23
+  readings although there are only 21. The 00:10:00 reading shows up in both the 00:00 and the 00:10 window, and
+  it also skews the 00:00 window's mean and maximum. The hourly volume report built on these windows is
+  consequently too high.
+
+  Windows are documented as half-open `[start, start + width)`: a reading exactly on a boundary belongs only to
+  the window that starts there. For the example the expected counts are 10, 10 and 1, and the window means must
+  only include their own readings. The same must hold when an explicit `start` is passed.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Setup changes the window mask in resample.window_stats from `t < hi` to `t <= hi`. Visible tests only use
+  samples between boundaries. Acceptance reproduces the report and checks related boundary cases.

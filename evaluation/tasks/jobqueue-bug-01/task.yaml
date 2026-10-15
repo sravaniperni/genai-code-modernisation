@@ -1,0 +1,22 @@
+id: jobqueue-bug-01
+repo: jobqueue
+category: bug_fix
+split: dev
+title: SQL store claims same-priority jobs newest first
+request: |
+  Since we moved production from `MemoryJobStore` to `SQLJobStore`, jobs of the same priority are no longer
+  processed in the order they were submitted. Under load the oldest jobs starve: whenever new work keeps
+  arriving, workers keep picking the most recently submitted job.
+
+  Example: with an `SQLJobStore`, enqueue `report-a` at 10:00:00, `report-b` at 10:00:05 and `report-c` at
+  10:00:10, all with the default priority. Claiming three times returns `report-c`, `report-b`, `report-a`.
+  `MemoryJobStore` returns `report-a`, `report-b`, `report-c`, which is what the `JobStore` contract
+  documents: the highest priority first and, within one priority, submission order (also for jobs
+  submitted within the same instant). Priority ordering between different priorities is correct today and
+  must stay that way.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay sorts the claim query by created_at DESC and seq DESC inside a priority (LIFO). The visible
+  tests only claim jobs of distinct priorities from the SQL store. Acceptance checks FIFO within a priority
+  for different and identical submission times, mixed priorities, delayed jobs becoming due, queue filters,
+  agreement with MemoryJobStore on a seeded random workload, and execution order through WorkerPool.drain.

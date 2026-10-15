@@ -1,0 +1,29 @@
+id: ledgerkit-mig-04
+repo: ledgerkit
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated threading aliases in the rate refresher
+request: |
+  `ledgerkit.rates.RateRefresher` still uses the camelCase threading aliases that Python has deprecated:
+
+      DeprecationWarning: setName() is deprecated, set the name attribute instead
+      DeprecationWarning: setDaemon() is deprecated, set the daemon attribute instead
+      DeprecationWarning: isSet() is deprecated, use is_set() instead
+
+  With DeprecationWarnings turned into errors (as in our CI) the refresher can't even be started, and
+  inside the worker thread the warning kills the loop before any rates are loaded. Please migrate to the
+  current threading API.
+
+  The refresher must behave as it does today: its worker is a daemon thread named
+  `ledgerkit-rate-refresher`; the first refresh happens immediately after `start()`;
+  `wait_for_refresh()` and `running` report progress and state; calling `start()` while it is running
+  raises `RuntimeError`; `stop()` stops the worker promptly even with a long interval, and the refresher
+  can be started again afterwards; an exception from the provider is stored in `last_error` without
+  stopping the worker.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Thread.setName/setDaemon and Event.isSet have been deprecated since Python 3.10. Acceptance runs with
+  DeprecationWarnings as errors and checks thread name/daemon flag, immediate refresh, running state,
+  double start, prompt stop, restart, provider error handling and that the aliases are gone from the source.

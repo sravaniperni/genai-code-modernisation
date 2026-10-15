@@ -1,0 +1,26 @@
+id: releasebot-bug-01
+repo: releasebot
+category: bug_fix
+split: dev
+title: Pre-releases are ordered incorrectly
+request: |
+  Two related problems with pre-release versions since the last refactoring of the version helpers:
+
+  1. We tagged `v2.0.0-rc.1`, `v2.0.0-rc.2` and then the final `v2.0.0`. Now `releasebot next` treats
+     `v2.0.0-rc.2` as the latest release: it looks for the commits since the rc.2 tag and proposes the
+     wrong next version. A final release must rank above all of its pre-releases (SemVer:
+     `1.0.0-rc.1 < 1.0.0`).
+  2. For 1.3.0 we needed many release candidates. After `v1.3.0-rc.10` existed, `releasebot next --pre`
+     proposed `1.3.0-rc.10` again instead of `1.3.0-rc.11`, i.e. rc.10 was considered older than rc.9.
+
+  Version ordering everywhere (tag lists, latest release, pre-release numbering) should follow SemVer 2.0
+  precedence rules: numeric identifiers compare numerically, numeric identifiers rank below alphanumeric
+  ones, a longer list of identifiers ranks higher when all preceding ones are equal, and build metadata is
+  ignored.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay replaces the semver-based comparison in releasebot.versioning.sort_versions with a
+  tuple key (major, minor, patch, prerelease or "") which sorts finals before their pre-releases and
+  compares pre-release identifiers as strings. The visible tests only sort final versions and rc.1/rc.2,
+  so they still pass. Acceptance checks the SemVer spec ordering, latest_release, next_prerelease past
+  rc.9 and release planning after a final release.

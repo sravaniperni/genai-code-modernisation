@@ -1,0 +1,31 @@
+id: webhookrelay-bug-01
+repo: webhookrelay
+category: bug_fix
+split: dev
+title: Correctly signed JSON webhooks rejected with "signature mismatch"
+request: |
+  Acme's billing system started sending us webhooks last week and every one of them is rejected by
+  `POST /hooks/acme` with `401 {"error": "signature mismatch"}`. Their signatures are correct: they sign
+  `<timestamp>.<raw body>` with HMAC-SHA256 exactly as our docs describe, and we re-computed the HMAC by hand
+  over the bytes captured at the load balancer and got the same value they send.
+
+  Reproduction with our staging secret `acme-staging-secret` (and a clock at 2026-01-01T12:00:00Z):
+
+    Content-Type: application/json
+    X-Relay-Timestamp: 1767268800
+    X-Relay-Signature: sha256=a4200650bc3fd4fc86d44cb41844b9afa07d54f7ab435cc956c6a2489858ab2d
+    body (exactly these bytes): {"invoice":"INV-7","amount":1200}
+
+  is answered with 401. Webhooks from our own staging sender, which happens to format its JSON the way
+  Python's json.dumps does by default, are accepted. Some of our other partners send pretty-printed JSON
+  with a trailing newline and they would be affected too.
+
+  Expected: a request whose signature matches the exact bytes that were received is accepted (202), no
+  matter how the JSON is formatted, and any request whose body was altered after signing is still rejected.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Injected defect (app.py): for JSON requests the intake endpoint verifies the HMAC over
+  json.dumps(request.get_json()) instead of the raw request body, so only bodies that happen to equal
+  Python's default re-serialisation verify. The visible tests sign json.dumps(...) output and still pass.
+  Acceptance posts compact, pretty-printed (trailing newline), non-ASCII and key-reordered JSON, a form body,
+  tampered bodies, and a signature computed over the re-serialised JSON, and checks the parsed event.

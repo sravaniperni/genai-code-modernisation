@@ -1,0 +1,29 @@
+id: webhookrelay-bug-05
+repo: webhookrelay
+category: bug_fix
+split: heldout
+title: Plus signs in target query parameters arrive as spaces
+request: |
+  One of our targets is configured with static query parameters:
+
+    targets:
+      alerts:
+        url: https://hooks.example/in?team=core
+        params: {label: "p1+urgent", channel: "#ops", tz: "+02:00"}
+
+  The receiving service (a standard form/query-string parser) sees `label="p1 urgent"` and
+  `tz=" 02:00"`: every `+` in a parameter value turns into a space by the time it arrives. Looking at the
+  outgoing request, the relay puts the `+` into the query string literally (`...&label=p1+urgent&...`),
+  and in a query string a literal `+` means a space.
+
+  Expected: every static parameter (and the `delivery` id the relay adds) arrives at the receiver exactly as
+  configured, whatever characters it contains (`+`, spaces, `&`, `=`, `%`, `#`, `/`, non-ASCII...). The
+  target URL's own query parameters and fragment must still be preserved, and parameters whose value is
+  null must still be left out.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Injected defect (delivery.py): build_delivery_url quotes keys and values with werkzeug's url_quote (path
+  quoting, which leaves '+' and other sub-delimiters unescaped) instead of form-encoding them. The visible
+  tests only use plain values. Acceptance round-trips tricky keys and values through parse_qs, checks
+  existing query/fragment preservation and None handling, and checks the query parameters actually seen by
+  the downstream (MockTransport) for a configured target.

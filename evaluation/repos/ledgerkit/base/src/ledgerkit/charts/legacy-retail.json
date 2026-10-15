@@ -1,0 +1,17 @@
+{
+  "name": "legacy-retail",
+  "title": "Einzelhandel / Commerce de détail (2019)",
+  "version": "2019.4-CH",
+  "requires": ">=0.5,<0.9",
+  "description": "Multi-currency retail chart shipped with the 2019 releases.",
+  "accounts": [
+    {"code": "1000", "name": "Kasse – Filiale Zürich", "type": "asset", "currency": "CHF"},
+    {"code": "1010", "name": "Caisse enregistreuse – Genève", "type": "asset", "currency": "CHF", "parent": "1000"},
+    {"code": "1200", "name": "Bank EUR", "type": "asset", "currency": "EUR"},
+    {"code": "2000", "name": "Verbindlichkeiten", "type": "liability", "currency": "CHF"},
+    {"code": "2800", "name": "Eigenkapital", "type": "equity", "currency": "CHF"},
+    {"code": "3000", "name": "Warenertrag", "type": "income", "currency": "CHF"},
+    {"code": "4000", "name": "Warenaufwand", "type": "expense", "currency": "CHF"},
+    {"code": "6000", "name": "Raumaufwand (Miete Straße 5)", "type": "expense", "currency": "CHF"}
+  ]
+}

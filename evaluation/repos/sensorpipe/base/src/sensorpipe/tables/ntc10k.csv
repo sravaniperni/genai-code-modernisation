@@ -1,0 +1,9 @@
+# sensorpipe calibration table: 10 kOhm NTC thermistor (B=3950), resistance in kOhm to temperature
+# format_version: 2.1.0
+# unit: degC
+raw,actual
+0.698,100
+1.492,75
+3.588,50
+10.000,25
+33.620,0

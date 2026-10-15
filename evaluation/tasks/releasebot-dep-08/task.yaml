@@ -1,0 +1,19 @@
+id: releasebot-dep-08
+repo: releasebot
+category: dependency_upgrade
+split: heldout
+title: Upgrade semver to 3.0.4
+request: |
+  semver 2.x is no longer maintained and our release-tooling base image now ships semver 3. Please
+  upgrade semver from 2.13.0 to 3.0.4 and pin it exactly in requirements.txt (`semver==3.0.4`).
+
+  Version handling must not change: validation of versions in tags and in `.releasebot.yml`, ordering,
+  bumping and pre-release numbering, and the version details that `releasebot --json next` prints under
+  the `semver` key (major, minor, patch, prerelease, build, version, is_prerelease).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  semver 3.0 renamed VersionInfo.isvalid to Version.is_valid and removed the deprecated
+  VersionInfo._asdict (use to_dict); module-level helpers are still present (only deprecated), so the
+  break is in releasebot.versioning.is_valid (used by tags, config and planning) and describe_version.
+  Acceptance checks the pinned version, validation through tags/config, arithmetic, describe_version
+  and the CLI JSON output.

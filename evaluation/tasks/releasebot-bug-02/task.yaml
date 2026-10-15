@@ -1,0 +1,25 @@
+id: releasebot-bug-02
+repo: releasebot
+category: bug_fix
+split: heldout
+title: BREAKING-CHANGE footers are not detected
+request: |
+  A commit with this message was released as a minor version (1.4.2 -> 1.5.0) instead of 2.0.0, and the
+  changelog had no "BREAKING CHANGES" section:
+
+      feat(config): read settings from pyproject.toml
+
+      BREAKING-CHANGE: .releasebot.yml is no longer read
+
+  The Conventional Commits specification says `BREAKING-CHANGE` is a synonym of `BREAKING CHANGE` when
+  used as a footer token, so this commit must be treated as breaking, with the footer text as the
+  breaking-change description — no matter where the footer appears among the other footers. The existing
+  `BREAKING CHANGE:` footer and the `!` marker must keep working, and ordinary footers or prose in the body
+  must not make a commit breaking.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay drops the comma in commits.BREAKING_TOKENS, turning the tuple into the string
+  "BREAKING CHANGE"; the `token in BREAKING_TOKENS` check becomes a substring test that only matches the
+  spaced spelling. Visible tests only use "BREAKING CHANGE:" and "!". Acceptance checks the hyphenated
+  footer alone and among other footers (multi-line value), unchanged behaviour for other spellings, the
+  resulting major bump (minor during 0.x) and the changelog section.

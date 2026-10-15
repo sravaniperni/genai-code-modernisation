@@ -1,0 +1,23 @@
+id: ledgerkit-bug-03
+repo: ledgerkit
+category: bug_fix
+split: heldout
+title: Entries dated on the last day of a period are left out of reports
+request: |
+  Entries dated on the last day of a reporting range are silently ignored. With a sale of 1,000.00
+  posted on 2024-03-31:
+
+  * `income_statement(ledger, date(2024, 3, 1), date(2024, 3, 31))` does not include it;
+  * `ledger.balance("4000", end=date(2024, 3, 31))` and `trial_balance(ledger, as_of=date(2024, 3, 31))`
+    ignore everything posted on the 31st, and `balance_sheet(ledger, date(2024, 3, 31))` no longer balances
+    against the month-end bank statement;
+  * closing March with `close_period()` leaves that sale in the income account.
+
+  Both bounds of a date range (`start`/`end`, `as_of`) are documented as inclusive, and entries on the
+  first day of the range are included correctly — only the end date is affected. Entries dated after the
+  end date must of course still be excluded.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup makes Ledger.entries_between treat the end date as exclusive. Visible tests never place an
+  entry on a range's end date. Acceptance checks entries_between, balance, trial balance, income
+  statement, balance sheet and period closing at month end, plus exclusion of the following day.

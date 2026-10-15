@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "releasebot"
+version = "0.9.0"
+description = "Release automation for projects that follow Conventional Commits"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+dependencies = [
+    "click>=7.1",
+    "semver>=2.13",
+    "packaging>=21.3",
+    "Jinja2>=3.0",
+    "Markdown>=3.3",
+    "ruamel.yaml>=0.17",
+    "importlib-metadata>=4.6",
+    "httpx>=0.23",
+]
+
+[project.scripts]
+releasebot = "releasebot.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+releasebot = ["templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

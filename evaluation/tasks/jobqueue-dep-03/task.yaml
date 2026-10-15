@@ -1,0 +1,23 @@
+id: jobqueue-dep-03
+repo: jobqueue
+category: dependency_upgrade
+split: heldout
+title: Upgrade pydantic to 2.9.2
+request: |
+  Two of the services that embed jobqueue have moved to pydantic 2 and can no longer install us next to
+  them, because we pin pydantic 1.10. Upgrade pydantic from 1.10.19 to 2.9.2 and pin it exactly in
+  requirements.txt (`pydantic==2.9.2`).
+
+  Submission validation must not change for our users: `parse_spec()` / `JobQueue.enqueue()` keep the same
+  defaults (optional fields stay optional), report problems as `InvalidJobSpec` with the offending field
+  names as keys, reject unknown fields, enforce the queue-name pattern and numeric limits, strip
+  surrounding whitespace from strings, normalise `run_at` to UTC and refuse `delay` together with `run_at`.
+  A validated `JobSpec` must stay immutable. Handler payload schemas built on `PayloadSchema` must keep
+  rejecting unknown keys, applying defaults and reporting errors as `payload.<field>`.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  pydantic 2 raises at import for Field(regex=...) and for @root_validator without skip_on_failure, makes
+  Optional[...] fields without a default required, silently ignores the v1 config keys allow_mutation and
+  anystr_strip_whitespace (so specs become mutable and whitespace is kept), and moves extra="forbid" to
+  model_config. Acceptance checks the version and each of these behaviours through parse_spec,
+  validate_payload and JobQueue.

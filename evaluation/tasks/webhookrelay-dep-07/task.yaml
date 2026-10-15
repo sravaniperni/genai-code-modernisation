@@ -1,0 +1,22 @@
+id: webhookrelay-dep-07
+repo: webhookrelay
+category: dependency_upgrade
+split: heldout
+title: Upgrade Markdown to 3.7
+request: |
+  Please upgrade Python-Markdown from 3.3.7 to 3.7 and pin it exactly (Markdown==3.7) in requirements.txt.
+  3.3.x is no longer maintained and we want the parser fixes from the 3.4+ releases (several of our
+  senders' Markdown is mis-rendered today).
+
+  Notification bodies are rendered with `webhookrelay.rendering.render_markdown` and then sanitised. The
+  HTML that reaches recipients must stay the same after the upgrade: `@user` mentions and `#123` issue
+  references are still linked (but not inside code), fenced code blocks and lists render as before, and
+  tables keep their column alignment in the final, sanitised output.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Markdown 3.4 removed the md_globals argument passed to Extension.extendMarkdown (TypeError) and the
+  deprecated Registry.add() (AttributeError: use register(item, name, priority)). It also changed the
+  tables extension to emit style="text-align: ..." instead of align="...": the sanitiser only allows align
+  on th/td, so alignment silently disappears unless the extension is configured with
+  use_align_attribute=True (3.5+) or the sanitiser is taught to keep text-align. Acceptance accepts either
+  form of alignment and checks the version, links, code spans/blocks, lists and template integration.

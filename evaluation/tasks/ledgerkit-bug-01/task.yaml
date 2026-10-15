@@ -1,0 +1,28 @@
+id: ledgerkit-bug-01
+repo: ledgerkit
+category: bug_fix
+split: dev
+title: Money.allocate loses or invents cents
+request: |
+  Splitting an amount with `Money.allocate()` doesn't add up any more, which breaks cost allocations:
+
+      >>> Money("100.00", "USD").allocate([1, 1, 1])
+      [Money(amount=Decimal('33.33'), ...), Money(amount=Decimal('33.33'), ...), Money(amount=Decimal('33.33'), ...)]
+
+  One cent disappears (99.99 in total). Other cases invent cents instead: `Money("2.00", "USD").allocate([1, 1, 1])`
+  returns 0.67 three times (2.01), and `Money("0.05", "USD").allocate([1, 1])` gives 0.02 + 0.02. As a
+  consequence `Ledger.allocate(...)` raises `UnbalancedEntryError` ("does not balance") for perfectly
+  ordinary allocations such as moving USD 100.00 of marketing costs to three departments in equal parts.
+
+  Expected behaviour (as documented on `Money.allocate`): the shares always add up exactly to the amount
+  rounded to the currency's minor unit; every share is within one minor unit of its exact proportional
+  share; the minor units left over after rounding every share down go one each to the shares with the
+  largest remainders, earlier shares first when remainders tie. So 100.00 → 33.34 / 33.33 / 33.33,
+  2.00 → 0.67 / 0.67 / 0.66, 0.05 → 0.03 / 0.02, JPY 1000 → 334 / 333 / 333; negative amounts are split
+  the same way with the sign flipped.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup replaces the largest-remainder algorithm in Money.allocate with naive per-share rounding.
+  Visible tests only use splits that divide evenly. Acceptance checks the documented examples, tie
+  breaking, remainder ordering, negative amounts, currencies with 0/3 minor digits, a seeded property
+  test and Ledger.allocate.

@@ -1,0 +1,23 @@
+id: sensorpipe-dep-04
+repo: sensorpipe
+category: dependency_upgrade
+split: heldout
+title: Upgrade arrow to 1.3.0
+request: |
+  Upgrade arrow from 0.17.0 to 1.3.0 and pin it exactly in requirements.txt.
+
+  The gateway image's dependency scanner flags arrow 0.17 as unmaintained, and the reporting service we share an
+  environment with already requires arrow 1.x.
+
+  Everything that depends on time handling must produce exactly the same values as before: epoch seconds
+  (whole seconds, as integers), flooring to intervals, local-time formatting, parsing of custom timestamp formats,
+  and the report exports. Downstream archiving keys on report file names of the form
+  `sensorpipe-report-<epoch seconds>.csv`, and the `first_epoch`/`last_epoch`/`generated_epoch` fields in CSV and
+  JSON reports are consumed as integers, so those must not change either.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  arrow 1.0 turned Arrow.timestamp from an int property into a float-returning method, so epoch_seconds returns a
+  bound method (TypeError in floor_time, non-serialisable JSON, garbage CSV), and the 'X' format token now renders
+  float timestamps ('1710070200.0'), which changes report file names. Acceptance checks the installed version and
+  the integer epoch values, file names (also with fractional seconds), CSV/JSON exports and the other arrow-backed
+  helpers.

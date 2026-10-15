@@ -1,0 +1,25 @@
+id: webhookrelay-dep-06
+repo: webhookrelay
+category: dependency_upgrade
+split: heldout
+title: Upgrade bleach to 6.2.0
+request: |
+  bleach 4.1.0 is no longer maintained (it vendors an old html5lib and still drags in six and packaging).
+  Please upgrade bleach from 4.1.0 to 6.2.0 and pin it exactly (bleach==6.2.0) in requirements.txt.
+
+  bleach sanitises every piece of HTML we render from untrusted webhook data (Markdown notification bodies
+  and anything passed to `webhookrelay.rendering.sanitize`). The allow-list must stay exactly as it is today:
+  the same tags, the same attributes per tag (including table cell alignment), the same URL schemes, and the
+  same inline CSS properties on `<span>` (color, background-color, font-weight, text-decoration; anything
+  else is dropped). Disallowed tags are stripped, not escaped.
+
+  Note that bleach's CSS sanitising needs tinycss2; tinycss2 1.4.0 is available on our package mirror if
+  you need it (pin it exactly too).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  bleach 6.0 turned ALLOWED_TAGS into a frozenset (ALLOWED_TAGS + [...] raises TypeError at import of
+  rendering.py) and removed the `styles=` argument of clean()/Cleaner in favour of
+  css_sanitizer=CSSSanitizer(...) (which needs tinycss2, the bleach[css] extra). If style is allowed
+  without a CSS sanitizer, bleach 6 empties style attributes and warns. Acceptance checks the version and
+  the allow-list behaviour (tags, attributes, protocols, CSS properties, table alignment, stripping) through
+  sanitize(), render_markdown() and an HTML notification template.

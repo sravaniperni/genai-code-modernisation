@@ -1,0 +1,26 @@
+id: sensorpipe-dep-01
+repo: sensorpipe
+category: dependency_upgrade
+split: dev
+title: Upgrade numpy to 2.2.6
+request: |
+  Upgrade numpy from 1.26.4 to 2.2.6 and pin it exactly in requirements.txt.
+
+  The analytics platform team is moving every service on the plant gateways to the numpy 2 ABI (their
+  compiled extensions are now only built against numpy 2), and sensorpipe is installed into the same
+  environment, so we can no longer hold numpy at 1.26.
+
+  With numpy 2.2.6 installed, sensorpipe must keep producing the same results as today: reading batches,
+  resampling and windowed statistics, flow integration, calibration curves and gain chains, and all anomaly
+  detectors (z-score, rolling bounds, fault codes). The upgrade must also be warning-clean: our numpy-2 CI job
+  treats DeprecationWarnings as errors, so sensorpipe must not rely on anything that numpy 2.2 reports as
+  deprecated either.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Baseline uses np.float_, np.NaN, np.Inf (removed in numpy 2), np.product/np.cumproduct/np.alltrue (removed),
+  and np.trapz/np.in1d (deprecated in numpy 2 -> DeprecationWarning, caught by -W error). Acceptance checks the
+  installed numpy version and exercises every affected path (readings arrays, resample/window_stats/integrate,
+  calibration apply_array and GainChain, z-score/rolling/fault-code detection) with warnings as errors. Test inputs
+  use aware datetimes directly so the unrelated utcfromtimestamp deprecation is never reached.

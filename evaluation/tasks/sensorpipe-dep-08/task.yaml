@@ -1,0 +1,20 @@
+id: sensorpipe-dep-08
+repo: sensorpipe
+category: dependency_upgrade
+split: heldout
+title: Upgrade importlib-metadata to 7.2.1
+request: |
+  Upgrade importlib-metadata from 4.13.0 to 7.2.1 and pin it exactly in requirements.txt.
+
+  The vendor detector-plugin SDK we deploy next to sensorpipe now requires importlib-metadata>=7, so the 4.x pin
+  makes the gateway environment unresolvable.
+
+  Third-party anomaly detectors registered under the `sensorpipe.detectors` entry-point group must still be
+  discovered and created exactly as today: plugins from several installed distributions are all found, plugins
+  that fail to import or do not provide a Detector subclass are skipped with a warning, built-in detectors cannot
+  be shadowed, and asking for an unknown detector raises ConfigError listing the available ones.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  plugins.py calls importlib_metadata.entry_points().get(group); the SelectableGroups dict interface was removed in
+  importlib-metadata 5 (entry_points() returns EntryPoints without .get). Acceptance installs throw-away
+  dist-info directories on sys.path and checks discovery, skipping rules and create_detector.

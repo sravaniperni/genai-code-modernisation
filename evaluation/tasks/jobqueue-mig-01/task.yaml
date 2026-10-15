@@ -1,0 +1,22 @@
+id: jobqueue-mig-01
+repo: jobqueue
+category: deprecated_api_migration
+split: dev
+title: Stop using deprecated threading aliases in WorkerPool
+request: |
+  Running the test suite on Python 3.12 with `-W error::DeprecationWarning` (which CI is about to enforce)
+  blows up inside `WorkerPool`: it still uses the camelCase threading aliases `Thread.setDaemon()`,
+  `Thread.getName()` and `threading.currentThread()`, all of which emit `DeprecationWarning` on 3.12 and are
+  slated for removal. With warnings as errors the pool cannot even start its threads.
+
+  Please move the worker pool to the supported threading APIs. Behaviour must not change: workers are daemon
+  threads named `<pool name>-1` ... `<pool name>-<size>`, `worker_names()` reports those names while the pool
+  runs, every job records the name of the worker thread that executed it, and `stop()` remains graceful.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay reintroduces Thread.setDaemon, Thread.getName and threading.currentThread in workers.py.
+  Acceptance runs with DeprecationWarning as error: starting the pool raises at setDaemon, worker threads die at
+  currentThread, worker_names() raises at getName. It checks daemon threads, names, job.worker attribution,
+  graceful stop and (as a secondary check) that the aliases are gone from the source.

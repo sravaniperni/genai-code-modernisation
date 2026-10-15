@@ -1,0 +1,27 @@
+id: webhookrelay-mig-04
+repo: webhookrelay
+category: deprecated_api_migration
+split: heldout
+title: Remove the deprecated cgi module from Content-Type parsing
+request: |
+  Importing the relay on Python 3.12 emits
+
+    DeprecationWarning: 'cgi' is deprecated and slated for removal in Python 3.13
+
+  (PEP 594). We only use it for `cgi.parse_header()` when parsing the Content-Type of incoming webhooks in
+  `webhookrelay.payloads`. Please remove the dependency on the cgi module.
+
+  `parse_content_type()` must keep returning exactly what it returns today for the headers our senders use:
+  the media type lower-cased, parameter names lower-cased, parameter values with surrounding quotes removed
+  (including quoted values containing `;` or escaped quotes), surrounding whitespace ignored, and
+  `application/octet-stream` with no parameters for a missing or blank header. Body decoding that depends on
+  it (charset handling, JSON/`+json`, form, XML and text bodies) must not change.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Start state: payloads.py imports cgi (DeprecationWarning at import on 3.12) and parse_content_type wraps
+  cgi.parse_header. With DeprecationWarning as error, importing webhookrelay.payloads fails at collection.
+  Acceptance checks parse_content_type on a range of realistic headers (case, whitespace, quoted values
+  with ';' and escaped quotes, multiple parameters, missing/blank header), charset-dependent decoding,
+  normalise() through Content-Type, and that cgi is no longer imported in src.

@@ -1,0 +1,27 @@
+id: webhookrelay-mig-02
+repo: webhookrelay
+category: deprecated_api_migration
+split: heldout
+title: Stop calling asyncio.get_event_loop() without a running loop
+request: |
+  The backfill command (which uses `BatchSender.send_all`) prints
+
+    DeprecationWarning: There is no current event loop
+
+  on Python 3.12. `asyncio.get_event_loop()` without a running event loop is deprecated (it becomes an error
+  in Python 3.14), and it already bites us today: `send_all` raises "RuntimeError: There is no current event
+  loop" when it is called from a worker thread, or a second time after some other code in the process has
+  used `asyncio.run()`.
+
+  Please migrate `send_all` off the deprecated call. Its behaviour must stay the same: it blocks until the
+  whole batch is done, returns one result per request in the input order, reports per-request transport
+  errors in the results instead of raising, and never has more than `concurrency` requests in flight. It
+  must work when called repeatedly, from the main thread or from other threads.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Start state: send_all does asyncio.get_event_loop().run_until_complete(...). Acceptance (with
+  DeprecationWarning as error) calls send_all from the main thread, repeatedly, after asyncio.run() has
+  cleared the current loop, and from a worker thread, and checks ordering, error reporting and the
+  concurrency cap; it also checks get_event_loop() is no longer used in the batch module.

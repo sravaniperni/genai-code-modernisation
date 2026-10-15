@@ -1,0 +1,23 @@
+id: sensorpipe-bug-02
+repo: sensorpipe
+category: bug_fix
+split: heldout
+title: Conversions into Fahrenheit return wrong values
+request: |
+  Converting temperatures *into* Fahrenheit returns nonsense values, while converting *from* Fahrenheit is fine.
+
+  Examples:
+  - `convert(20.0, "degC", "degF")` returns about 272.3 instead of 68.0
+  - `convert(300.0, "K", "degF")` returns about 284.6 instead of 80.33
+  - `convert(212.0, "degF", "degC")` correctly returns 100.0
+
+  This hits the US plant reports, which are configured with `target_unit: degF`; values there are off by
+  hundreds of degrees. Pressure, flow and the other units look correct.
+
+  Expected: conversions into `degF` (and its `°F`/`F` aliases) are correct for scalars, numpy arrays and
+  readings, and round-trip with conversions out of `degF` (e.g. -40 °C is -40 °F).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Setup changes Unit.from_base from `(value - offset) / scale` to `value / scale - offset`, which is only wrong for
+  units with both a non-unit scale and an offset (degF). Visible tests only convert from degF. Acceptance checks
+  conversions into degF plus regression checks on other units.

@@ -1,0 +1,25 @@
+id: jobqueue-mig-05
+repo: jobqueue
+category: deprecated_api_migration
+split: heldout
+title: Stop relying on sqlite3's deprecated default datetime adapter and converter
+request: |
+  `ExecutionHistory` hands `datetime` objects straight to sqlite3 and lets the module convert `TIMESTAMP`
+  columns back (`detect_types=PARSE_DECLTYPES`). Python 3.12 deprecated sqlite3's built-in default datetime
+  adapter and timestamp converter: every insert and every read now emits `DeprecationWarning`, and under
+  `-W error::DeprecationWarning` recording or reading attempts fails outright.
+
+  Please stop depending on the default adapter/converter. Behaviour must be preserved: attempts round-trip
+  with their exact timestamps (microseconds included) as aware UTC datetimes, aware timestamps in other
+  zones are stored as the same instant, attempts come back in order, history files can be closed and
+  reopened, and history databases written by the current release (timestamps stored as
+  `YYYY-MM-DD HH:MM:SS[.ffffff]` UTC text) must remain readable. The executor's history recording must keep
+  working.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay makes history.py pass naive UTC datetimes as parameters (default adapter) and connect with
+  PARSE_DECLTYPES so TIMESTAMP columns go through the default converter; both warn on 3.12. Acceptance runs
+  with DeprecationWarning as error and checks round trips, time-zone normalisation, ordering, reopening a
+  file, reading rows written in the existing on-disk format, and executor integration.

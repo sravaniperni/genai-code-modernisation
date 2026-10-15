@@ -1,0 +1,23 @@
+id: jobqueue-mig-06
+repo: jobqueue
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated Logger.warn calls
+request: |
+  The executor and the worker pool log their warnings with `Logger.warn()`, a deprecated alias that emits
+  `DeprecationWarning` on Python 3.12. Under `-W error::DeprecationWarning` this turns every retry into a crash:
+  a job whose handler fails once is left half-processed instead of being rescheduled, a failing completion
+  webhook breaks job execution, and a stop timeout raises instead of reporting that workers are still busy.
+
+  Please replace the deprecated logging calls. Log output must stay the same: these messages are still
+  emitted at WARNING level on the `jobqueue.executor` and `jobqueue.workers` loggers and mention the job id
+  (retries and notification failures) or the busy workers (stop timeouts), and the surrounding behaviour
+  (retry scheduling, notification failures never changing the job outcome, `stop()` returning `False`) is
+  unchanged.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay replaces log.warning with the deprecated log.warn in executor.py (retry and notification
+  failure) and workers.py (stop timeout). Acceptance runs with DeprecationWarning as error, checks job state
+  and WARNING records captured with caplog for all three paths, and greps src/ for remaining .warn( calls.

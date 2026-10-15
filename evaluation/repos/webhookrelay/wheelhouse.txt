@@ -1,0 +1,60 @@
+# webhookrelay: every distribution needed by the baseline and by all 20 tasks (target pins included),
+# with their transitive dependencies, as resolved for Python 3.12 / manylinux x86_64.
+# Several packages appear in two versions (old baseline pin and upgrade target), so pip cannot resolve this
+# file in a single call; download it line by line with the AUTHORING.md command, e.g.
+#   grep -v '^#' wheelhouse.txt | while read req; do python3.12 -m pip download --only-binary=:all: \
+#     --python-version 3.12 --platform manylinux2014_x86_64 --platform manylinux_2_17_x86_64 \
+#     --platform manylinux_2_28_x86_64 --platform any -d <wheelhouse> "$req"; done
+
+# baseline runtime pins (requirements.txt)
+Flask==2.2.5
+Werkzeug==2.2.3
+Jinja2==3.0.3
+MarkupSafe==2.1.5
+urllib3==1.26.20
+httpx==0.23.3
+PyJWT==1.7.1
+bleach==4.1.0
+Markdown==3.3.7
+importlib-metadata==4.13.0
+
+# baseline development pins (requirements-dev.txt)
+pytest==8.3.5
+iniconfig==2.3.1
+pluggy==1.7.0
+packaging==26.3
+
+# baseline transitive dependencies
+click==8.5.0
+itsdangerous==2.2.0
+httpcore==0.16.3
+h11==0.14.0
+rfc3986==1.5.0
+idna==3.20
+sniffio==1.3.1
+certifi==2026.7.22
+anyio==4.15.1
+typing_extensions==4.16.0
+six==1.17.0
+webencodings==0.6.1
+zipp==4.1.1
+
+# upgrade targets (dep-01 .. dep-08) and their new dependencies
+PyJWT==2.10.1
+Jinja2==3.1.6
+Flask==3.1.2
+Werkzeug==3.1.3
+blinker==1.9.0
+urllib3==2.5.0
+httpx==0.28.1
+httpcore==1.0.9
+h11==0.16.0
+bleach==6.2.0
+tinycss2==1.4.0
+Markdown==3.7
+importlib-metadata==7.2.1
+
+# also fetched when the target pins above are resolved one at a time (newest compatible releases);
+# not selected by any task environment because the related packages are pinned exactly
+MarkupSafe==3.0.4
+Werkzeug==3.1.9

@@ -1,0 +1,27 @@
+id: ledgerkit-mig-03
+repo: ledgerkit
+category: deprecated_api_migration
+split: heldout
+title: Migrate chart templates off the legacy importlib.resources functions
+request: |
+  Listing or loading the bundled chart-of-accounts templates (`ledgerkit.templates`) emits deprecation
+  warnings on Python 3.12, e.g.
+
+      DeprecationWarning: read_text is deprecated. Use files() instead. Refer to
+      https://importlib-resources.readthedocs.io/en/latest/using.html#migrating-from-legacy for migration advice.
+
+  and likewise for `contents`, `is_resource` and `open_text`. Our CI now runs with DeprecationWarnings
+  as errors. Please migrate the module to the `importlib.resources.files()` API.
+
+  Behaviour must stay the same: `available_templates()` returns the sorted names of the bundled `.json`
+  templates only (no other files of the package), templates are read as UTF-8, `template_info()`,
+  `load_template()` and `is_supported()` return what they return today, and unknown names raise
+  `TemplateNotFoundError` (which is also a `KeyError`). Templates must also keep loading when ledgerkit
+  is imported from a zip archive (we ship a zipapp build).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  templates.py uses importlib.resources.contents/is_resource/read_text (deprecated legacy API in 3.11/3.12).
+  Acceptance runs with DeprecationWarnings as errors; it checks listing, metadata, unicode content,
+  unknown names, is_supported, and loading from a zip archive in a subprocess (also with warnings as errors).

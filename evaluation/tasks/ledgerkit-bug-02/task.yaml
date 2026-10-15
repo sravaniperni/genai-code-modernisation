@@ -1,0 +1,26 @@
+id: ledgerkit-bug-02
+repo: ledgerkit
+category: bug_fix
+split: heldout
+title: Period closing doubles expense balances instead of zeroing them
+request: |
+  `close_period()` produces wrong closing entries as soon as a period has expenses. Example for January
+  2024 (calendar fiscal year): Sales (4000) 5,000.00 credit, Rent (6100) 1,200.00 debit and Salaries
+  (6200) 2,000.00 debit. After
+
+      close_period(ledger, FiscalCalendar().period_for(date(2024, 1, 15)), "3100")
+
+  Sales is zero as expected, but Rent shows 2,400.00 and Salaries 4,000.00 — the expense balances were
+  doubled instead of cleared — and Retained Earnings (3100) is credited with 8,200.00 instead of the
+  net income of 1,800.00. A month with a loss makes retained earnings go up instead of down.
+
+  Expected: after closing, every income and expense account has a zero balance for the period
+  (whatever side its balance is on — e.g. a sales-returns income account with a debit balance is
+  credited), retained earnings is credited with the period's net income or debited with its net loss,
+  only movements dated inside the period are closed, and the books stay balanced.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup posts each account's natural-sign balance as a debit, which is right for credit-normal income
+  accounts but doubles debit-normal expense accounts, and credits retained earnings with income plus
+  expenses. The visible test only closes a period that has income. Acceptance checks the report's
+  example, a net loss, a debit-balance income account, multi-period closing and statement totals.

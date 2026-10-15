@@ -1,0 +1,24 @@
+id: ledgerkit-bug-04
+repo: ledgerkit
+category: bug_fix
+split: heldout
+title: RateTable.convert converts in the wrong direction
+request: |
+  Currency conversion is inverted. With a single rate loaded,
+
+      table = RateTable()
+      table.add("EUR", "USD", "1.10", date(2024, 1, 1))   # one euro costs 1.10 dollars
+
+  `table.convert(Money("100.00", "EUR"), "USD")` returns USD 90.91 instead of USD 110.00, and
+  `table.convert(Money("110.00", "USD"), "EUR")` returns EUR 121.00 instead of EUR 100.00. `table.rate()`
+  itself returns the right numbers (1.10 for EUR→USD, 1/1.10 for USD→EUR). Because trial balances and
+  statements translate foreign-currency accounts through `convert()`, every report in a reporting
+  currency is wrong for our EUR and JPY accounts.
+
+  Expected: converting an amount from currency A to B multiplies it by the A→B rate on or before the
+  conversion date (whether the table stores A/B or only B/A), and rounds to B's minor unit.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup swaps the currency arguments of the rate lookup inside RateTable.convert. Visible tests only
+  test rate() and same-currency conversions. Acceptance checks the report's example, inverse pairs,
+  dated rates, minor-unit rounding (JPY/BHD) and trial-balance translation.

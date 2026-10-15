@@ -1,0 +1,28 @@
+id: webhookrelay-dep-03
+repo: webhookrelay
+category: dependency_upgrade
+split: heldout
+title: Upgrade Flask to 3.1.2 and Werkzeug to 3.1.3
+request: |
+  Flask 2.2 and Werkzeug 2.2 are out of support, and Werkzeug 2.2.3 is affected by several advisories
+  (CVE-2023-46136, CVE-2024-34069, CVE-2024-49766/49767). Please upgrade Flask from 2.2.5 to 3.1.2 and
+  Werkzeug from 2.2.3 to 3.1.3, pinning both exactly (Flask==3.1.2, Werkzeug==3.1.3) in requirements.txt.
+  Jinja2 is already on 3.1.6, which Flask 3.1 accepts.
+
+  Everything the service does over HTTP or with URLs must behave exactly as before:
+  - webhook intake (`POST /hooks/<source>`): status codes and the JSON response body;
+  - the admin status page (`/admin/status`): links per target, state badges, escaping of untrusted text;
+  - the JSON status endpoint (`/admin/status.json`): our monitoring parses it, so its format (including how
+    timestamps and delivery records are serialised) must not change;
+  - the delivery URLs built for targets (static `params`, existing query strings and fragments);
+  - the retry scheduler, which is started when the app receives its first request.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Start state: baseline with Jinja2 already bumped to 3.1.6 (templating.py migrated) so that Flask 3.1's
+  Jinja2>=3.1.2 requirement does not drag the Jinja2 migration into this task. Breakages in the target
+  versions: flask.Markup / flask.escape and flask.json.JSONEncoder removed (ImportError), app.json_encoder is
+  silently ignored since Flask 2.3 (datetimes would be serialised as HTTP dates and records via
+  dataclasses.asdict, changing /admin/status.json and the intake response), app.before_first_request
+  removed, and werkzeug.urls (url_quote, url_encode, url_parse) removed in Werkzeug 3 (note url_encode
+  skipped None values). Acceptance checks versions, intake responses, the status page (quoted links,
+  escaped error text), status JSON format, scheduler start on first request, and delivery URL semantics.

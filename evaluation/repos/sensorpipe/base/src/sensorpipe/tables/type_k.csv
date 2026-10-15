@@ -1,0 +1,11 @@
+# sensorpipe calibration table: type K thermocouple, EMF in mV (0 degC reference) to temperature
+# format_version: 2.0.0
+# unit: degC
+raw,actual
+0.000,0
+2.023,50
+4.096,100
+6.138,150
+8.138,200
+10.153,250
+12.209,300

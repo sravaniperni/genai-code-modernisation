@@ -1,0 +1,28 @@
+id: releasebot-mig-06
+repo: releasebot
+category: deprecated_api_migration
+split: heldout
+title: Make release-bundle extraction use an explicit tarfile filter
+request: |
+  Unpacking a release bundle on Python 3.12 emits
+
+      DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or
+      modify their metadata. Use the filter argument to control this behavior.
+
+  and our CI turns deprecation warnings into errors, so `unpack_bundle()` is unusable there. Please stop
+  relying on the deprecated implicit extraction behaviour.
+
+  Bundles come from CI artifacts and must still be treated as untrusted: archives with members that would
+  end up outside the destination directory (`..` paths, symlinks or hard links pointing outside it) or
+  with special files such as FIFOs or devices must be refused with `BundleError`, and nothing may be
+  written outside the destination. Normal bundles, including symlinks that stay inside the bundle, must
+  unpack exactly as before, and unreadable archives still raise `BundleError`.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay validates members by hand and then calls TarFile.extractall() without a filter
+  argument, which warns on 3.12 (PEP 706). The reference solution uses filter="data" and maps
+  tarfile.FilterError to BundleError (keeping the manual checks with an explicit filter would also pass).
+  Acceptance checks round trips, internal links, traversal/absolute/hard-link escapes, FIFOs, corrupt
+  archives, and that every extractall() call in src/ passes a filter.

@@ -1,0 +1,30 @@
+id: ledgerkit-dep-08
+repo: ledgerkit
+category: dependency_upgrade
+split: heldout
+title: Upgrade semver to 3.0.4
+request: |
+  Please upgrade semver from 2.13.0 to 3.0.4 and pin it exactly (`semver==3.0.4`) in requirements.txt —
+  the 2.x line is no longer maintained and the release tooling we share with other projects needs
+  semver 3.
+
+  While you are at it, move our format-version code off semver's module-level helper functions: they
+  are deprecated (DeprecationWarning "... will be removed in semver 3") and we don't want new warnings
+  in the logs after the upgrade.
+
+  Behaviour must stay the same:
+
+  * `check_format_version()` accepts any valid semantic version with the current major version up to
+    and including `FORMAT_VERSION` (pre-releases and build metadata included) and raises `FormatError`
+    otherwise, with the same messages as today ("invalid format version …", "unsupported format
+    version …", "… is newer than the supported …");
+  * `needs_upgrade()` is true for versions that sort before `FORMAT_VERSION` by semver precedence;
+  * `format_version_info()` returns a plain dict with major, minor, patch, prerelease and build;
+  * `load_ledger()` keeps accepting/rejecting documents by their `formatVersion` accordingly.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  semver 3 removed VersionInfo.isvalid (is_valid) and VersionInfo._asdict (to_dict), so with the new pin
+  every format check raises AttributeError; the module-level parse_version_info/compare/match helpers
+  still exist but emit (Pending)DeprecationWarnings. Acceptance checks the installed version, all
+  accept/reject rules and messages, needs_upgrade, format_version_info, the load_ledger path, and that no
+  semver deprecation warnings are emitted.

@@ -1,0 +1,29 @@
+id: ledgerkit-mig-01
+repo: ledgerkit
+category: deprecated_api_migration
+split: dev
+title: Replace datetime.utcnow()/utcfromtimestamp() with timezone-aware UTC datetimes
+request: |
+  On Python 3.12 creating a journal entry or importing a bank feed emits
+
+      DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future
+      version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+  (and the matching warning for `datetime.datetime.utcfromtimestamp()`). Our CI is switching to
+  `-W error::DeprecationWarning`, and downstream services already compare our timestamps with aware
+  datetimes, so please migrate `ledgerkit.journal` to timezone-aware UTC datetimes:
+
+  * `JournalEntry.created_at` must be an aware datetime in UTC — for newly created entries, for entries
+    read back with `JournalEntry.from_dict()` / `Ledger.from_dict()`, and for entries produced by
+    `importers.read_bank_feed()`;
+  * the serialised timestamp format must not change (`"2024-01-31T10:00:05Z"`, whole seconds, UTC);
+  * bank-feed entries must still be dated with the UTC calendar date of their POSIX timestamp, whatever
+    the local time zone of the machine running the import.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  journal.utcnow()/from_timestamp() call the deprecated naive-UTC constructors. The fix makes them
+  return aware UTC datetimes and makes parse_timestamp() return aware values while keeping the "Z" format.
+  Acceptance runs with DeprecationWarnings as errors, checks awareness/offsets, the unchanged serialised
+  form, round trips, bank-feed dating under a far-from-UTC TZ, and that the deprecated calls are gone.

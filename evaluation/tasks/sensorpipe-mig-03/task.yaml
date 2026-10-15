@@ -1,0 +1,24 @@
+id: sensorpipe-mig-03
+repo: sensorpipe
+category: deprecated_api_migration
+split: heldout
+title: Make tar extraction of archived batches explicit about filtering
+request: |
+  On Python 3.12, restoring an archived reading batch emits
+
+      DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify
+      their metadata. Use the filter argument to control this behavior.
+
+  which fails our warnings-as-errors CI job. Please make batch extraction explicit about extraction filtering so it
+  is warning-free now and behaves the same on 3.14.
+
+  Behaviour must be kept: a normal batch extracts to the same relative paths and the extracted files are returned
+  sorted; archives containing absolute paths, `..` components, symbolic or hard links, or device files are still
+  rejected as a whole with ArchiveError, without writing anything outside the destination; unreadable archives
+  raise ArchiveError.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  archive.extract_batch calls TarFile.extractall without filter= (DeprecationWarning on 3.12). Acceptance runs a
+  round trip with warnings as errors and checks the rejection rules for unsafe members.

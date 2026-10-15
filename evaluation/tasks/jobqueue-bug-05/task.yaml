@@ -1,0 +1,22 @@
+id: jobqueue-bug-05
+repo: jobqueue
+category: bug_fix
+split: heldout
+title: Recurring jobs are enqueued twice when the scheduler ticks on the minute
+request: |
+  Our scheduler service calls `RecurringScheduler.tick()` from a loop that is aligned to whole minutes. Every
+  recurring job is now enqueued twice per fire time: a `*/15 * * * *` entry produces one job at the 10:15:00
+  tick and a second job, again with `scheduled_for` 10:15, at the 10:16:00 tick. Customers received duplicate
+  reports.
+
+  Asking the schedule directly shows the same thing: `CronSchedule("*/15 * * * *").next_after(t)` with `t`
+  exactly 10:15:00 returns 10:15:00 itself instead of 10:30:00 (with `t` = 10:15:00.5 it returns 10:30).
+  Expected: `next_after()` / `next_timestamp()` always return a fire time strictly later than the given time,
+  and a scheduler ticking at arbitrary instants - including exactly on fire times, or twice at the same
+  instant - enqueues each fire time exactly once.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay only moves the cursor to the next minute when the given time has a seconds/microseconds
+  component, so a time exactly on a matching minute is returned as its own successor. Visible tests never use
+  an exact boundary. Acceptance checks next_after/next_timestamp on boundaries (also in a non-UTC zone),
+  minute-aligned ticking over an hour, ticking twice at the same instant, and an hourly schedule over a day.

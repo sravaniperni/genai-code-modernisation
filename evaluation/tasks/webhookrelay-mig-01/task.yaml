@@ -1,0 +1,33 @@
+id: webhookrelay-mig-01
+repo: webhookrelay
+category: deprecated_api_migration
+split: dev
+title: Replace deprecated datetime.utcnow() and utcfromtimestamp()
+request: |
+  Since moving to Python 3.12 our logs are full of
+
+    DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future
+    version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+  and the same warning for datetime.datetime.utcfromtimestamp(), coming from the relay's clock helpers
+  (webhookrelay/clock.py), which every component uses for delivery timestamps, signature timestamp checks and
+  retry scheduling. Please migrate off both deprecated calls. As the warning suggests, the relay should work
+  with timezone-aware UTC datetimes from now on: SystemClock().now(), FixedClock and from_epoch() should
+  return aware datetimes in UTC.
+
+  Behaviour that must not change:
+  - serialised timestamps (delivery records, status JSON) keep the exact `2026-01-01T12:00:00Z` format;
+  - naive datetimes passed in by callers or plugins are still interpreted as UTC, and aware datetimes in
+    other time zones are converted to UTC;
+  - signature timestamp tolerance checks, retry scheduling and Retry-After handling keep working with the
+    real system clock as well as with FixedClock.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Start state: clock.py uses datetime.utcnow()/utcfromtimestamp() and a naive-UTC convention (ensure_utc
+  strips tzinfo). Swapping only the two calls for aware equivalents leaves ensure_utc/FixedClock naive, so
+  the scheduler and dispatcher end up comparing naive and aware datetimes (TypeError) when driven by the
+  real SystemClock; isoformat_z must still produce the trailing Z. Acceptance runs with DeprecationWarning as
+  error, checks the clock helpers, signature tolerance with the system clock, scheduler/dispatcher with the
+  system clock, the serialised formats, and that the deprecated calls are gone from src.

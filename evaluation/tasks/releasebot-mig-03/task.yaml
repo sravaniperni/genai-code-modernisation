@@ -1,0 +1,29 @@
+id: releasebot-mig-03
+repo: releasebot
+category: deprecated_api_migration
+split: heldout
+title: Replace locale.getdefaultlocale() in date localisation
+request: |
+  Rendering a changelog on Python 3.12 emits
+
+      DeprecationWarning: 'locale.getdefaultlocale' is deprecated and slated for removal in Python 3.15.
+      Use setlocale(), getencoding() and getlocale() instead.
+
+  which our CI treats as an error. It comes from the code that picks the language for the localised
+  release date in changelog headings. Please remove the use of `locale.getdefaultlocale()`.
+
+  The language selection must not change: it follows the user's locale environment variables at the
+  moment the date is formatted, with the usual precedence (LC_ALL, then LC_CTYPE, then LANG, then the
+  first entry of LANGUAGE; empty variables are ignored), accepts the usual spellings of locale names
+  (`de`, `de_AT@euro`, `fr_CA.ISO8859-1`, ...), and falls back to English (or the given default) for
+  C/POSIX, unknown or unsupported locales. Note that our CI runners have no locales generated, so the
+  selection cannot rely on the locale actually being installed.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay implements releasebot.dates.detect_language with locale.getdefaultlocale(), which
+  warns on 3.12. getlocale()/setlocale() are not drop-in replacements (they reflect the process locale,
+  not the environment at call time, and setlocale fails for locales that are not installed). The fix
+  reads LC_ALL/LC_CTYPE/LANG/LANGUAGE and uses locale.normalize. Acceptance (with -W error) checks
+  precedence, normalisation, fallbacks and that getdefaultlocale is no longer referenced.
