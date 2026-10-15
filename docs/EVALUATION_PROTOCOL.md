@@ -76,9 +76,12 @@ model failure. Oracle results are reported separately and never as model perform
 
 The first oracle run (`oracle-all-final`) was stopped after 75 tasks because `sensorpipe-dep-01` (a **dev**-split task)
 escalated with the reference solution available: repair prompts never showed a planned file that did not fit the
-editable-content budget (defect 15 in `docs/FAILURE_ANALYSIS.md`). The platform was fixed and every reported run
-(oracle, platform, baseline; run tag `final2`) uses the fixed revision. The task set was not changed. The aborted run is
-kept in the evaluation database with status `aborted`, and its 75 rows are archived outside `reports/`.
+editable-content budget (defect 15 in `docs/FAILURE_ANALYSIS.md`). The platform was fixed; the task set was not
+changed. A second oracle run on the fixed code (`oracle-all-final2`, 46/46 successful when stopped) was stopped because
+the commit history was re-authored before the first push, which changed the commit hash recorded as
+`platform_revision`. Every reported run (oracle, platform, baseline; run tag `final3`) records a revision that exists in
+the published history. Both stopped runs are kept in the evaluation database with status `aborted`; their partial
+per-task files are archived outside `reports/` and are not reported.
 
 ## Commands
 
