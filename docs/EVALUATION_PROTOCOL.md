@@ -43,7 +43,7 @@ A task is successful only if all hold:
 | | Platform | Baseline |
 | --- | --- | --- |
 | Model | same model, same server, temperature 0 | same |
-| Retrieval | hybrid (keyword + structural), plan context | keyword/structural references, top 3 implementation files only |
+| Retrieval | hybrid (keyword + structural); excerpts of retrieved code as context | the same retrieval picks the top 3 in-scope implementation files; no additional context |
 | Plan | structured plan (validated JSON) | none |
 | Feedback | sandboxed checks vs baseline, failure report | none |
 | Repair | up to 3 attempts in total | 1 attempt |
@@ -52,6 +52,27 @@ A task is successful only if all hold:
 
 The asymmetry in the verification gate favours the baseline: a platform patch that would have passed acceptance but
 failed the platform's own checks is counted as a platform failure.
+
+## Frozen configuration of the reported runs
+
+| Item | Value |
+| --- | --- |
+| Task-set version | `29159cc0f4ce5d5a` (`evaluation/TASKSET.lock`, frozen 2026-10-15) |
+| Validation | 100/100 valid (`evaluation/validation-report.json`) |
+| Wheelhouse | 90 wheels rebuilt from the pinned lists only; listing SHA-256 `968959ca1e377d2a4ac65d9b1aabc50e614457d4605cda39c206f7a1fb8e3689` |
+| Model | `qwen2.5-coder-1.5b-instruct-q4_k_m` via llama-cpp-python 0.3.16, 4 CPU threads, context 16,384 |
+| Generation | temperature 0, max 1,024 output tokens, grammar-constrained JSON for plans |
+| Context budgets | 10,000 characters of retrieved excerpts, 16,000 characters of editable file content |
+| Attempt budget | platform 3, baseline 1 |
+| Sandbox | 300 s per command, 2,048 MB memory, 256 processes, no network |
+| Isolation of runs | dedicated PostgreSQL database and data directory, separate from development runs |
+
+## Oracle check (harness ceiling)
+
+Before the model runs, the complete platform workflow is executed with an *oracle* model that answers with the
+reference solution as minimal SEARCH/REPLACE hunks (`mode=oracle`). It measures false negatives of the pipeline itself
+(environments, verification, policy, acceptance plumbing): every oracle failure is a platform or harness defect, not a
+model failure. Oracle results are reported separately and never as model performance.
 
 ## Commands
 

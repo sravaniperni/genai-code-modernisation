@@ -20,7 +20,7 @@ Last updated: 2026-10-15
 | M7 GitHub integration | VERIFIED against stand-in; live **BLOCKED** | 16 tests + 6 recovery scenarios against a fault-injecting in-process GitHub stand-in backed by a real bare git remote. Live verification needs an authorised test repository and a fine-grained token from the owner. |
 | M8 Frontend | VERIFIED | typecheck, lint, prettier, 24 Vitest tests, build, 5 Playwright E2E tests against the real backend (re-run independently) |
 | M9 Security & recovery | VERIFIED | `reports/security-results.md` (29/29 executions, 27 scenarios), `reports/recovery-results.md` (32/32 incl. PostgreSQL restarts and SIGKILL) |
-| M10 Evaluation benchmark | IN PROGRESS | 5 fixture repositories, 100 tasks authored; per-repository validation reported 20/20 by each author; full re-validation against a rebuilt wheelhouse, freeze and measured runs pending |
+| M10 Evaluation benchmark | IN PROGRESS | 100 tasks (40/30/30; 20 dev / 80 held-out) in 5 fixture repositories; **100/100 validated** in the sandbox against a wheelhouse rebuilt from pinned lists (`evaluation/validation-report.json`); frozen as `29159cc0f4ce5d5a`; static integrity suite 204/204. Oracle, platform and baseline runs in progress. |
 | M11 CI & documentation | IN PROGRESS | `.github/workflows/ci.yml` passes `actionlint`; every CI step was run locally and passed except jobs that only exist on GitHub runners. **Not yet executed on GitHub** (requires push). Docs written; README final numbers pending evaluation. |
 | M12 Release | NOT STARTED | push requires owner approval |
 
@@ -43,7 +43,6 @@ Last updated: 2026-10-15
 
 ## Next actions
 
-1. Rebuild the wheelhouse from the pinned lists, re-validate all 100 tasks, commit the validation report, freeze
-   `TASKSET.lock`.
-2. Run platform and baseline evaluations on all 100 tasks; generate reports; complete `docs/FAILURE_ANALYSIS.md`.
-3. Write resume evidence files from measured results only.
+1. Finish oracle, platform and baseline runs on all 100 tasks (`scripts/run_evaluation.sh`, run tag `final`);
+   generate reports; complete `docs/FAILURE_ANALYSIS.md`.
+2. Write resume evidence files from measured results only.
