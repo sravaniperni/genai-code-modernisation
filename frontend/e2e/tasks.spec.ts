@@ -21,9 +21,12 @@ test('the task form shows validation errors returned by the API', async ({ page 
   await page.getByLabel('Category').selectOption('bug_fix');
   await page.getByLabel('Allowed paths').fill('../secrets');
   await page.getByRole('button', { name: 'Create task' }).click();
-  await expect(page.locator('.field-error')).toContainText(
-    'scope patterns must be repository-relative',
-  );
+  // Errors from the first submission stay rendered until the resubmission re-renders, so wait for the
+  // new error itself (retrying) instead of asserting on whichever error elements exist right after the click.
+  await expect(
+    page.locator('.field-error', { hasText: 'scope patterns must be repository-relative' }),
+  ).toBeVisible();
+  await expect(page.locator('.field-error')).toHaveCount(1);
   await expect(page.getByLabel('Allowed paths')).toHaveAttribute('aria-invalid', 'true');
   await expect(page).toHaveURL(/\/tasks\/new$/);
 });
