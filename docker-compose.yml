@@ -1,4 +1,4 @@
-# Development stack: PostgreSQL, migrations, API, worker (frontend: see frontend/README.md).
+# Development stack: PostgreSQL, migrations, API, worker and the dashboard (http://127.0.0.1:8080).
 #
 #   cp .env.example .env            # then edit model / GitHub settings
 #   docker compose up --build
@@ -82,6 +82,18 @@ services:
     # Model servers on the host (e.g. scripts/local_model_server.sh) are reachable at host.docker.internal.
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BASE_REGISTRY: ${BASE_REGISTRY:-docker.io/library}
+    image: modernisation-frontend:dev
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   postgres-data:

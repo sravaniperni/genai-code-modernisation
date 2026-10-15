@@ -1,0 +1,202 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "22"
+
+jobs:
+  backend-quality:
+    name: Backend lint, format, types, lockfile
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv lock --check
+      - run: uv sync --frozen
+      - run: uv run ruff check src tests
+      - run: uv run ruff format --check src tests
+      - run: uv run mypy src
+
+  backend-tests:
+    name: Backend tests (PostgreSQL, git, sandbox)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: modernisation
+          POSTGRES_PASSWORD: modernisation-dev
+          POSTGRES_DB: modernisation_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U modernisation" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      MODERNISATION_TEST_DATABASE_URL: postgresql+psycopg://modernisation:modernisation-dev@127.0.0.1:5432/modernisation_test
+      MODERNISATION_TEST_WHEELHOUSE: ${{ github.workspace }}/.data/wheelhouse
+      MODERNISATION_SCENARIO_REPORT_DIR: ${{ github.workspace }}/scenario-reports
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install sandbox prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bubblewrap
+          # Ubuntu 24.04 restricts unprivileged user namespaces via AppArmor; bubblewrap needs them.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          sudo groupadd --system --gid 9100 modsandbox
+          sudo useradd --system --uid 9100 --gid 9100 --no-create-home --shell /usr/sbin/nologin modsandbox
+      - name: Build offline wheelhouse (test tooling only)
+        run: WHEELHOUSE_SETS=base scripts/build_wheelhouse.sh "$MODERNISATION_TEST_WHEELHOUSE"
+      - run: uv sync --frozen
+        working-directory: backend
+      - name: Run tests
+        working-directory: backend
+        # Root is required so the sandbox can drop to the dedicated sandbox uid. Live-model tests need an endpoint
+        # and db_restart scenarios restart the database server, so both are excluded here.
+        run: >
+          sudo --preserve-env=MODERNISATION_TEST_DATABASE_URL,MODERNISATION_TEST_WHEELHOUSE,MODERNISATION_SCENARIO_REPORT_DIR,PATH
+          .venv/bin/pytest -m "not live_llm and not db_restart" -p no:cacheprovider -q
+      - name: Upload security and recovery scenario reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario-reports
+          path: scenario-reports/
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend typecheck, lint, unit tests, build
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run test
+      - run: npm run build
+
+  e2e:
+    name: End-to-end (Playwright against the real API)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: modernisation
+          POSTGRES_PASSWORD: modernisation-dev
+          POSTGRES_DB: modernisation_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U modernisation" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      E2E_DATABASE_URL: postgresql+psycopg://modernisation:modernisation-dev@127.0.0.1:5432/modernisation_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+        working-directory: backend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run e2e
+        working-directory: frontend
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+
+  dependency-security:
+    name: Dependency and security checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Audit Python dependencies (pip-audit)
+        working-directory: backend
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt > /tmp/requirements.txt
+          uvx pip-audit --strict --requirement /tmp/requirements.txt --disable-pip
+      - name: Static security lint (ruff bandit rules)
+        working-directory: backend
+        # S101/S603/S607 are reviewed exceptions recorded in pyproject.toml (list-form subprocess calls only)
+        run: uv run --frozen ruff check --select S --ignore S101,S603,S607 src
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Audit npm dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high --omit=dev
+
+  evaluation-integrity:
+    name: Benchmark task-set integrity
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --frozen
+        working-directory: backend
+      - name: Static integrity checks (counts, lock, leakage, layout)
+        working-directory: backend
+        run: uv run pytest tests/evaluation -q -p no:cacheprovider
+
+  containers:
+    name: Container build verification
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          tags: modernisation-backend:ci
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: false
+          tags: modernisation-frontend:ci
+      - name: Validate compose file
+        run: docker compose config --quiet
