@@ -212,6 +212,7 @@ def checks(task_id: int, session: Session = Depends(get_session)) -> list[dict[s
             "command": c.command,
             "exit_code": c.exit_code,
             "timed_out": c.timed_out,
+            "passed": bool(c.summary.get("passed", c.exit_code == 0 and not c.timed_out)),
             "duration_ms": c.duration_ms,
             "summary": c.summary,
             "stdout_tail": c.stdout[-4000:],
@@ -263,6 +264,7 @@ def approve(task_id: int, body: ApprovalIn, session: Session = Depends(get_sessi
 
 @router.get("/{task_id}/model-calls")
 def model_calls(task_id: int, session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    _task(session, task_id)
     rows = session.scalars(select(ModelCall).where(ModelCall.task_id == task_id).order_by(ModelCall.id))
     return [
         {

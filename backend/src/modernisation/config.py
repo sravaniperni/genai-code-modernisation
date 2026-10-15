@@ -87,6 +87,11 @@ class Settings(BaseSettings):
     require_plan_approval: bool = False
     workspace_retention: Literal["keep", "delete"] = "delete"
 
+    # --- evaluation ----------------------------------------------------------------------------------
+    # Context budgets (characters) applied identically to every evaluated task in both modes.
+    eval_context_chars: int = 10000
+    eval_edit_context_chars: int = 16000
+
     # --- observability -----------------------------------------------------------------------------
     log_level: str = "INFO"
     otel_exporter: Literal["none", "console", "jsonl"] = "none"

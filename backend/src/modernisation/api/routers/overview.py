@@ -35,13 +35,31 @@ def health(session: Session = Depends(get_session)) -> dict[str, Any]:
         "database": db_ok,
         "sandbox": {"backend": settings.sandbox_backend, "bubblewrap_installed": shutil.which("bwrap") is not None},
         "model_configured": settings.model_provider != "none" and bool(settings.model_name),
+        # Workers currently holding an unexpired lease (idle workers hold none, so this is a lower bound).
+        "active_workers": sorted(
+            set(
+                session.scalars(
+                    select(Task.lease_owner).where(Task.lease_owner.is_not(None), Task.lease_expires_at > func.now())
+                )
+            )
+        )
+        if db_ok
+        else [],
         "github_configured": settings.github_token is not None,
     }
 
 
 @router.get("/meta")
 def meta() -> dict[str, list[str]]:
-    return {"states": [s.value for s in TaskState], "categories": [c.value for c in TaskCategory]}
+    from modernisation.agents.states import RUNNABLE, TERMINAL
+
+    return {
+        "states": [s.value for s in TaskState],
+        "categories": [c.value for c in TaskCategory],
+        "terminal_states": sorted(s.value for s in TERMINAL),
+        "restartable_states": ["CANCELLED", "ESCALATED", "FAILED"],
+        "runnable_states": sorted(s.value for s in RUNNABLE),
+    }
 
 
 @router.get("/dashboard")

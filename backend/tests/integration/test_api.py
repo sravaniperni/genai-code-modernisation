@@ -165,3 +165,21 @@ def test_evaluation_endpoints_report_absence_honestly(api: TestClient):
 
 def test_model_test_endpoint_without_model(api: TestClient):
     assert api.post("/api/settings/model/test").status_code == 400
+
+
+def test_read_endpoints_never_index_implicitly(api: TestClient, repo_id: int):
+    for path in ("tree", "search?q=x", "file?path=README.md"):
+        r = api.get(f"/api/repositories/{repo_id}/{path}")
+        assert r.status_code == 409 and "POST /index first" in r.json()["detail"]
+    assert api.get(f"/api/repositories/{repo_id}/snapshots").json() == []
+    api.post(f"/api/repositories/{repo_id}/index", json={})
+    assert api.get(f"/api/repositories/{repo_id}/tree").status_code == 200
+    assert api.get(f"/api/repositories/{repo_id}/tree", params={"ref": "no-such-ref"}).status_code == 400
+
+
+def test_meta_and_not_found_contracts(api: TestClient):
+    meta = api.get("/api/meta").json()
+    assert set(meta["terminal_states"]) == {"COMPLETED", "FAILED", "CANCELLED", "ESCALATED"}
+    assert "QUEUED" in meta["runnable_states"] and meta["restartable_states"] == ["CANCELLED", "ESCALATED", "FAILED"]
+    assert api.get("/api/tasks/999/model-calls").status_code == 404
+    assert api.get("/api/health").json()["active_workers"] == []

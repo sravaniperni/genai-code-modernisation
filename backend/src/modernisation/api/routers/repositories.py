@@ -70,18 +70,31 @@ def _repo_dict(session: Session, repo: Repository) -> dict[str, Any]:
     }
 
 
+def _index(session: Session, repo: Repository, ref: str) -> IndexSnapshot:
+    try:
+        return index_commit(session, repo, ref)
+    except (GitError, ValueError) as exc:
+        raise HTTPException(400, f"cannot index ref {ref!r}: {exc}") from exc
+
+
 def _snapshot_for(session: Session, repo: Repository, ref: str | None) -> IndexSnapshot:
+    """Existing index for ``ref`` (or the latest one). Read endpoints never index as a side effect."""
     if ref:
         try:
-            return index_commit(session, repo, ref)
+            sha = git_for(repo).resolve(ref)
         except (GitError, ValueError) as exc:
-            raise HTTPException(400, f"cannot index ref {ref!r}: {exc}") from exc
-    snap = latest_snapshot(session, repo.id)
+            raise HTTPException(400, f"unknown ref {ref!r}: {exc}") from exc
+        snap = session.scalar(
+            select(IndexSnapshot).where(
+                IndexSnapshot.repository_id == repo.id,
+                IndexSnapshot.commit_sha == sha,
+                IndexSnapshot.status == "ready",
+            )
+        )
+    else:
+        snap = latest_snapshot(session, repo.id)
     if snap is None:
-        try:
-            snap = index_commit(session, repo, repo.default_branch)
-        except (GitError, ValueError) as exc:
-            raise HTTPException(400, f"repository has no index and default branch cannot be indexed: {exc}") from exc
+        raise HTTPException(409, f"repository is not indexed{f' at {ref!r}' if ref else ''}; POST /index first")
     return snap
 
 
@@ -125,7 +138,7 @@ def refresh_repository(repo_id: int, session: Session = Depends(get_session)) ->
 @router.post("/{repo_id}/index", dependencies=[Depends(require_token)])
 def index_repository(repo_id: int, body: IndexRequest, session: Session = Depends(get_session)) -> dict[str, Any]:
     repo = _repo(session, repo_id)
-    snap = _snapshot_for(session, repo, body.ref or repo.default_branch)
+    snap = _index(session, repo, body.ref or repo.default_branch)
     return _snapshot_dict(snap) or {}
 
 

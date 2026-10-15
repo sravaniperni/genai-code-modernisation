@@ -125,6 +125,8 @@ class EvaluationRunner:
                         "max_processes": s.sandbox_max_processes,
                     },
                     "task_timeout_s": self.task_timeout_s,
+                    "context_chars": s.eval_context_chars,
+                    "edit_context_chars": s.eval_edit_context_chars,
                     "platform_revision": platform_revision(self.eval_dir.parent),
                 },
             )
@@ -208,6 +210,8 @@ class EvaluationRunner:
                     "max_attempts": task.max_attempts if self.mode == "platform" else 1,
                     "auto_complete": True,
                     "strategy": "agentic" if self.mode == "platform" else "single_shot",
+                    "context_chars": self.settings.eval_context_chars,
+                    "edit_context_chars": self.settings.eval_edit_context_chars,
                 },
             )
             session.add(row)
