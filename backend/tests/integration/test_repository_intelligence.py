@@ -160,3 +160,22 @@ def test_source_repository_owned_by_another_user(session: Session, sample_repo: 
     repo = register_local(session, "foreign-owner", str(sample_repo))
     snap = index_commit(session, repo, "main")
     assert snap.status == "ready" and snap.files_total == 8
+
+
+def test_workspace_applies_whole_file_rewrites(session: Session, sample_repo: Path):
+    """Regression: the whole-file flag must survive normalisation in Workspace.apply_edits."""
+    from modernisation.agents.edits import parse_edits
+    from modernisation.execution.policy import ChangePolicy
+    from modernisation.execution.workspace import Workspace
+
+    repo = register_local(session, "whole-file", str(sample_repo))
+    git = git_for(repo)
+    ws = Workspace("whole-file", git, git.resolve("main"))
+    ws.create()
+    original = ws.read("src/inventory/pricing.py") or ""
+    reply = '<file path="pyproject.toml">\n' + (ws.read("pyproject.toml") or "").replace("1.0.0", "1.0.1") + "</file>\n"
+    reply += '<file path="src/inventory/pricing.py">\n' + original.replace("/ 1000", "/ 100") + "</file>\n"
+    change = ws.apply_edits(parse_edits(reply), ChangePolicy())
+    assert sorted(change.files_changed) == ["pyproject.toml", "src/inventory/pricing.py"]
+    assert "percent / 100, 2)" in (ws.read("src/inventory/pricing.py") or "")
+    ws.destroy()

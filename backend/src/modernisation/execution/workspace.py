@@ -144,7 +144,7 @@ class Workspace:
         normalised: list[Edit] = []
         for edit in edits:
             path = policy.check_path(edit.path)
-            normalised.append(Edit(path, edit.search, edit.replace))
+            normalised.append(Edit(path, edit.search, edit.replace, whole_file=edit.whole_file))
             if path not in files:
                 files[path] = self.read(path)
                 target = safe_target(self.repo_dir, path)
