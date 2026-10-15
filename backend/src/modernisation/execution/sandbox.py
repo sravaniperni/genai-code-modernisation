@@ -294,6 +294,7 @@ class Sandbox:
             run_cwd = next((str(m.host) for m in mounts if m.target == cwd), cwd)
 
         cgroup = _CGroup(limits.memory_mb, limits.max_processes)
+        cgroup_enforced = cgroup.enforced
         uid, gid = self.uid, self.gid
         drop = os.geteuid() == 0
 
@@ -311,7 +312,11 @@ class Sandbox:
                 os.setgroups([])
                 os.setgid(gid)
                 os.setuid(uid)
-            resource.setrlimit(resource.RLIMIT_NPROC, (limits.max_processes, limits.max_processes))
+            # RLIMIT_NPROC counts every process of the shared sandbox uid, so using it as the per-job limit would
+            # let one job's fork bomb starve concurrent jobs. With cgroups the per-job limit is pids.max and the
+            # rlimit is only a host-wide backstop; without cgroups it falls back to the per-job value.
+            nproc = max(limits.max_processes * 16, 4096) if cgroup_enforced else limits.max_processes
+            resource.setrlimit(resource.RLIMIT_NPROC, (nproc, nproc))
 
         started = time.monotonic()
         timed_out = cancelled = False
@@ -352,7 +357,6 @@ class Sandbox:
                     break
         out_reader.join(timeout=5)
         err_reader.join(timeout=5)
-        cgroup_enforced = cgroup.enforced
         cgroup.cleanup()
         stdout, out_trunc = out_reader.text()
         stderr, err_trunc = err_reader.text()

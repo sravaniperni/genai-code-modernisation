@@ -59,9 +59,9 @@ def github_git_env(settings: Settings) -> dict[str, str] | None:
 
 def register_local(session: Session, name: str, path: str, settings: Settings | None = None) -> Repository:
     settings = settings or get_settings()
+    real = _authorised_local(Path(path), settings)  # authorise before any other validation
     if not NAME_RE.match(name):
         raise ValueError("repository name must be 1-100 characters of letters, digits, '.', '_' or '-'")
-    real = _authorised_local(Path(path), settings)
     if not (real / ".git").exists() and not (real / "HEAD").exists():
         raise ValueError(f"{real} is not a git repository")
     if session.scalar(select(Repository).where(Repository.name == name)):

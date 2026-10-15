@@ -28,6 +28,30 @@ ALWAYS_FORBIDDEN = [
     "**/id_rsa*",
 ]
 
+# Files whose contents must never be sent to a model provider (credentials, keys, local secrets).
+SENSITIVE_PATTERNS = [
+    "**/.env",
+    "**/.env.*",
+    "**/*.pem",
+    "**/*.key",
+    "**/*.p12",
+    "**/*.pfx",
+    "**/id_rsa*",
+    "**/id_ed25519*",
+    "**/.netrc",
+    "**/.pypirc",
+    "**/.npmrc",
+    "**/credentials",
+    "**/credentials.json",
+    "**/secrets.*",
+    "**/*.kdbx",
+]
+
+
+def is_sensitive_path(path: str) -> bool:
+    return any(_match(path, pattern) for pattern in SENSITIVE_PATTERNS)
+
+
 TEST_WEAKENING_PATTERNS = [
     re.compile(r"@pytest\.mark\.(skip|skipif|xfail)\b"),
     re.compile(r"\bpytest\.(skip|xfail)\("),

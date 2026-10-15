@@ -94,6 +94,8 @@ markers = [
     "sandbox: requires bubblewrap user-namespace sandboxing",
     "live_llm: requires a reachable model endpoint (MODEL_BASE_URL)",
     "slow: long-running tests",
+    "recovery: failure-recovery scenarios (reports/recovery-results.json)",
+    "db_restart: restarts the local PostgreSQL cluster (run in isolation)",
 ]
 
 [tool.ruff.lint.flake8-bugbear]

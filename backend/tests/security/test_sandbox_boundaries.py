@@ -186,3 +186,31 @@ def test_git_metadata_hidden_from_sandbox(sandbox: Sandbox, job: Path):
         limits=Limits(timeout_s=20),
     )
     assert res.ok and res.stdout.strip() == "[]"
+
+
+def test_fork_bomb_in_one_job_does_not_starve_another(sandbox: Sandbox, job: Path):
+    """Per-job process limits come from the cgroup, not the uid-wide RLIMIT_NPROC."""
+    import threading
+
+    bomb = (
+        "import os, time\n"
+        "for _ in range(5000):\n"
+        "    try:\n"
+        "        if os.fork() == 0:\n"
+        "            time.sleep(8); os._exit(0)\n"
+        "    except OSError:\n"
+        "        break\n"
+        "time.sleep(8)\n"
+    )
+    other = prepare_writable_dir(job.parent / "concurrent-job")
+    hog = threading.Thread(target=lambda: run(sandbox, job, bomb, limits=Limits(timeout_s=20, max_processes=200)))
+    hog.start()
+    time.sleep(2)  # the bomb now holds ~200 processes of the sandbox uid
+    victim = sandbox.run(
+        [PY, "-c", "import subprocess; [subprocess.run(['true']) for _ in range(20)]; print('ok')"],
+        mounts=[Mount(other, "/work", writable=True)],
+        limits=Limits(timeout_s=20, max_processes=50),
+    )
+    hog.join()
+    assert victim.cgroup_enforced
+    assert victim.ok and victim.stdout.strip() == "ok", victim.stderr

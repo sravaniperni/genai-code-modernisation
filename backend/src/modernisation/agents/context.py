@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from modernisation.agents.prompts import render_file
-from modernisation.execution.policy import ChangePolicy, PolicyViolation
+from modernisation.execution.policy import ChangePolicy, PolicyViolation, is_sensitive_path
 from modernisation.execution.workspace import Workspace
 
 
@@ -22,7 +22,7 @@ def excerpt_blocks(
     order: list[str] = []
     for ref in references:
         path = ref["path"]
-        if path in skip_paths:
+        if path in skip_paths or is_sensitive_path(path):
             continue
         if path not in spans:
             spans[path] = []

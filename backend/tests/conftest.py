@@ -139,5 +139,70 @@ def session(db: None) -> Iterator[object]:
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    _write_scenario_reports()
     if os.environ.get("MODERNISATION_KEEP_TEST_DATA") != "1":
         shutil.rmtree(BASE, ignore_errors=True)
+
+
+# --- scenario reports (recovery and security suites) -------------------------------------------------
+SCENARIO_RESULTS: dict[str, list[dict[str, object]]] = {}
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[object]):  # type: ignore[no-untyped-def]
+    outcome = yield
+    report = outcome.get_result()
+    meta = getattr(getattr(item, "function", None), "_scenario", None)
+    if meta is None:
+        return
+    if report.when == "call" or (report.when == "setup" and report.outcome != "passed"):
+        suite = "security" if "/security/" in str(item.path) else "recovery"
+        SCENARIO_RESULTS.setdefault(suite, []).append(
+            {
+                **meta,
+                "test": item.nodeid,
+                "outcome": report.outcome,
+                "duration_s": round(report.duration, 2),
+                "observations": getattr(item, "_observations", {}),
+                "detail": str(report.longrepr)[-1500:] if report.failed else None,
+            }
+        )
+
+
+@pytest.fixture()
+def observe(request: pytest.FixtureRequest):  # type: ignore[no-untyped-def]
+    def record(**kwargs: object) -> None:
+        obs = getattr(request.node, "_observations", {})
+        obs.update(kwargs)
+        request.node._observations = obs
+
+    return record
+
+
+def _write_scenario_reports() -> None:
+    import json
+    from datetime import UTC, datetime
+
+    target = os.environ.get("MODERNISATION_SCENARIO_REPORT_DIR")
+    if not target:
+        return
+    for suite, results in SCENARIO_RESULTS.items():
+
+        def total(key: str, rows: list[dict[str, object]] = results) -> int:
+            return sum(int((r["observations"] or {}).get(key, 0)) for r in rows)  # type: ignore[union-attr]
+
+        summary = {
+            "suite": suite,
+            "generated_at": datetime.now(UTC).isoformat(),
+            "scenarios": len(results),
+            "passed": sum(r["outcome"] == "passed" for r in results),
+            "failed": sum(r["outcome"] == "failed" for r in results),
+            "skipped": sum(r["outcome"] == "skipped" for r in results),
+            "duplicate_external_actions": total("duplicate_external_actions"),
+            "lost_task_state": total("lost_state"),
+            "incorrectly_resumed": total("incorrect_resume"),
+            "results": sorted(results, key=lambda r: str(r["id"])),
+        }
+        path = Path(target) / f"{suite}-results.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(summary, indent=2, default=str) + "\n")

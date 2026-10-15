@@ -779,6 +779,9 @@ class WorkflowEngine:
                 policy.check_path(path)
             except PolicyViolation as exc:
                 audit.append(f"{exc.code}: {exc}")
+        if audit:  # never apply a diff that touches disallowed paths, even in the verification workspace
+            self._escalate(session, task, "final diff violates change policy", payload={"audit": audit})
+            return
         originals = {p: verify_ws.read(p) for p in Workspace.paths_in_diff(attempt.diff)}
         verify_ws.apply_diff(attempt.diff, policy)
         for path, old in originals.items():

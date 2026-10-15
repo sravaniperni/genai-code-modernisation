@@ -769,7 +769,10 @@ def retrieve(data: SnapshotData, request: str, *, category: str | None = None, l
                 test_refs.append(_whole_file(data, importer, "test_link", 12.0, reason))
     merged = _merge(merged + test_refs)
     merged.sort(key=lambda r: -r.score)
-    return merged[:limit]
+    # Never surface credential/key files as context: their contents would be sent to the model provider.
+    from modernisation.execution.policy import is_sensitive_path
+
+    return [r for r in merged if not is_sensitive_path(r.path)][:limit]
 
 
 def _merge(refs: list[CodeReference]) -> list[CodeReference]:

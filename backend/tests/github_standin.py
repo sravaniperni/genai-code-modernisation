@@ -22,7 +22,7 @@ import httpx
 class Fault:
     method: str
     path_re: str
-    kind: str  # timeout_after_effect | timeout_before_effect | status
+    kind: str  # timeout_after_effect | timeout_before_effect | status | status_after_effect
     status: int = 500
     times: int = 1
     headers: dict[str, str] = field(default_factory=dict)
@@ -70,6 +70,8 @@ class GitHubStandIn:
         response = self._route(request, method, path)
         if fault and fault.kind == "timeout_after_effect":
             raise httpx.ReadTimeout("injected timeout after the server applied the change", request=request)
+        if fault and fault.kind == "status_after_effect":
+            return httpx.Response(fault.status, headers=fault.headers, json={"message": "injected failure"})
         return response
 
     def _route(self, request: httpx.Request, method: str, path: str) -> httpx.Response:
