@@ -9,6 +9,7 @@ base commit plus the recorded diff rather than trusted from disk.
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -32,11 +33,13 @@ from modernisation.llm.base import ModelClient, ModelError
 from modernisation.llm.structured import StructuredOutputError, complete_structured
 from modernisation.repository_intelligence.git_ops import GitError
 from modernisation.repository_intelligence.indexer import git_for, index_commit
-from modernisation.repository_intelligence.languages import is_dependency_manifest
+from modernisation.repository_intelligence.languages import is_dependency_manifest, is_test_path
 from modernisation.repository_intelligence.retrieval import impact_analysis, load_snapshot, retrieve
 
 log = logging.getLogger(__name__)
 S = TaskState
+# repository-relative file paths in check output; ``/work`` is the sandbox mount of the workspace
+REPORT_PATH_RE = re.compile(r"(?<![\w./-])(?:/work/)?((?:[\w.-]+/)*[\w-][\w.-]*\.(?:py|pyi|toml|txt|cfg|ini))\b")
 
 
 class TransientError(RuntimeError):
@@ -532,6 +535,17 @@ class WorkflowEngine:
         except (EditError, PolicyViolation) as exc:
             code = getattr(exc, "code", "rejected")
             attempt.rejection_reason = f"{code}: {exc}"
+            # A rejected attempt leaves the last applied change in place, so its unresolved check failures
+            # still apply and are carried forward instead of being replaced by the rejection message.
+            previous = load_checkpoint(session, task.id, "last_failure") or {}
+            check_report = previous.get("check_report") if base_diff else None
+            report = (
+                f"Your edits were rejected: {exc}\n"
+                "Valid paths are the ones in the <file path=...> tags; authorised scope: "
+                f"{policy.allowed_paths or 'whole repository'}."
+            )
+            if check_report:
+                report += "\n\nThe current change still has these unresolved problems:\n" + check_report
             save_checkpoint(
                 session,
                 task.id,
@@ -539,9 +553,8 @@ class WorkflowEngine:
                 {
                     "kind": "policy_violation" if isinstance(exc, PolicyViolation) else "edit_rejected",
                     "code": code,
-                    "report": f"Your edits were rejected: {exc}\n"
-                    "Valid paths are the ones in the <file path=...> tags; authorised scope: "
-                    f"{policy.allowed_paths or 'whole repository'}.",
+                    "report": report,
+                    "check_report": check_report,
                     "attempt_no": attempt_no,
                     "base_diff": base_diff,
                 },
@@ -649,6 +662,7 @@ class WorkflowEngine:
     ) -> None:
         cfg = self._cfg(task)
         failure["attempt_no"] = attempt.attempt_no
+        failure.setdefault("check_report", failure["report"])
         save_checkpoint(session, task.id, "last_failure", failure)
         if cfg.strategy == "single_shot":
             # Baseline strategy: no feedback loop; the unverified patch is kept for evaluation.
@@ -717,11 +731,19 @@ class WorkflowEngine:
             workspace.apply_diff(base.diff, policy)
         plan = task.plan or {}
         analysis = load_checkpoint(session, task.id, "analysis") or {}
-        targets = list(
-            dict.fromkeys([*(plan.get("target_files") or []), *((base.files_changed if base else []) or [])])
+
+        def exists(path: str) -> bool:
+            try:
+                return workspace.read(path) is not None
+            except (PolicyViolation, ValueError, OSError):
+                return False
+
+        targets = self._repair_targets(
+            list(plan.get("target_files") or []),
+            list((base.files_changed if base else []) or []),
+            failure.get("check_report") or failure.get("report", ""),
+            exists,
         )
-        failing_tests = self._failing_test_paths(failure.get("report", ""))
-        targets += [t for t in failing_tests if t not in targets]
         if not targets:
             targets = self._single_shot_targets(analysis)
         blocks, _ = editable_file_blocks(workspace, targets, policy, cfg.edit_context_chars)
@@ -747,18 +769,44 @@ class WorkflowEngine:
         )
 
     @staticmethod
-    def _failing_test_paths(report: str) -> list[str]:
-        paths = []
+    def _repair_targets(
+        plan_targets: list[str], changed: list[str], check_report: str, exists: Callable[[str], bool]
+    ) -> list[str]:
+        """Files to show the model for a repair, most important first (the edit budget may cut the tail).
+
+        Order: implementation files named in the failure report (tracebacks point at the code that breaks),
+        planned files the change has not touched yet, files already changed, then the failing tests.
+        """
+        implicated = [p for p in WorkflowEngine._report_paths(check_report) if not is_test_path(p) and exists(p)]
+        pending = [p for p in plan_targets if p not in changed]
+        tests = WorkflowEngine._failing_test_paths(check_report, exists)
+        return list(dict.fromkeys([*implicated, *pending, *changed, *tests]))
+
+    @staticmethod
+    def _report_paths(report: str, limit: int = 5) -> list[str]:
+        """Repository-relative paths mentioned in a check report (``src/pkg/mod.py:12: in f``)."""
+        paths: list[str] = []
+        for match in REPORT_PATH_RE.finditer(report):
+            path = match.group(1)
+            if ".." in path.split("/") or path in paths:
+                continue
+            paths.append(path)
+            if len(paths) >= limit:
+                break
+        return paths
+
+    @staticmethod
+    def _failing_test_paths(report: str, exists: Callable[[str], bool] | None = None) -> list[str]:
+        paths: list[str] = []
         for line in report.splitlines():
             if line.startswith("FAILED "):
                 ident = line[len("FAILED ") :].split("::")[0]
-                # junit classname is dotted (tests.test_mod.TestX) -> map to a path guess
+                # junit classname is dotted (tests.test_mod.TestX) -> the longest prefix that is an existing file
                 parts = ident.split(".")
-                for cut in range(len(parts), 0, -1):
-                    candidate = "/".join(parts[:cut]) + ".py"
-                    if candidate not in paths:
-                        paths.append(candidate)
-                        break
+                candidates = ["/".join(parts[:cut]) + ".py" for cut in range(len(parts), 0, -1)]
+                found = next((c for c in candidates if exists is None or exists(c)), None)
+                if found and found not in paths:
+                    paths.append(found)
         return paths[:3]
 
     # VERIFYING ----------------------------------------------------------------------------------------

@@ -6,6 +6,7 @@ verified. These tests do not measure model capability.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -166,6 +167,66 @@ def test_rejected_edits_are_repaired(session: Session, repo: Repository):
     assert task.state == "AWAITING_APPROVAL", task.state_reason
     first = session.scalar(select(PatchAttempt).where(PatchAttempt.task_id == task.id, PatchAttempt.attempt_no == 1))
     assert first and first.apply_status == "rejected" and "no_match" in (first.rejection_reason or "")
+
+
+RENAME_MODELS = """src/inventory/models.py
+<<<<<<< SEARCH
+    unit_price: float
+=======
+    price: float
+>>>>>>> REPLACE
+"""
+RENAME_CALLER = """src/inventory/pricing.py
+<<<<<<< SEARCH
+    subtotal = sum(item.unit_price * item.quantity for item in items)
+=======
+    subtotal = sum(item.price * item.quantity for item in items)
+>>>>>>> REPLACE
+"""
+
+
+def test_repair_shows_the_file_named_by_the_failure_even_after_a_rejected_attempt(session: Session, repo: Repository):
+    """Regression for a multi-file change whose plan missed a caller (found by the oracle benchmark run).
+
+    The traceback points at ``src/inventory/pricing.py``, which the plan did not list; the repair prompt must show
+    it, and a rejected repair in between must not erase the test failure from the next repair prompt.
+    """
+    plan = json.dumps(
+        {
+            "summary": "Rename LineItem.unit_price to price.",
+            "target_files": ["src/inventory/models.py", "src/inventory/report.py"],
+            "steps": [{"description": "rename the field", "files": ["src/inventory/models.py"]}],
+            "risks": [],
+            "validation": [],
+            "needs_clarification": False,
+            "clarification_questions": [],
+        }
+    )
+
+    def repair(messages: list[Any]) -> str:
+        prompt = messages[-1].content
+        if "Your edits were rejected" not in prompt:
+            return "I cannot find the problem."  # first repair: no usable edits
+        return RENAME_CALLER if '<file path="src/inventory/pricing.py">' in prompt else "No change."
+
+    store: dict[str, ScriptedModel] = {}
+    engine = engine_with({"plan": [plan], "implement": [RENAME_MODELS], "repair": [repair]}, store)
+    task = make_task(session, repo)
+    task.title, task.request = "Rename unit_price", "Rename the LineItem field unit_price to price everywhere."
+    session.commit()
+    task = run(session, engine, task)
+
+    assert task.state == "AWAITING_APPROVAL", task.state_reason
+    attempts = list(
+        session.scalars(select(PatchAttempt).where(PatchAttempt.task_id == task.id).order_by(PatchAttempt.attempt_no))
+    )
+    assert [(a.kind, a.apply_status, a.checks_passed) for a in attempts] == [
+        ("initial", "applied", False),
+        ("repair", "rejected", None),
+        ("repair", "applied", True),
+    ]
+    last_repair = [m for p, m in store["model"].calls if p == "repair"][-1][-1].content
+    assert "unit_price" in last_repair and "unresolved problems" in last_repair
 
 
 def test_attempt_budget_exhaustion_escalates(session: Session, repo: Repository):

@@ -56,7 +56,10 @@ def excerpt_blocks(
 def editable_file_blocks(
     workspace: Workspace, paths: list[str], policy: ChangePolicy, budget_chars: int
 ) -> tuple[list[str], list[str]]:
-    """Full current contents of editable files. Returns (blocks, paths_included)."""
+    """Full current contents of editable files, in priority order. Returns (blocks, paths_included).
+
+    A file that does not fit the remaining budget is skipped; later (smaller) files may still be included.
+    """
     blocks: list[str] = []
     included: list[str] = []
     used = 0
@@ -71,7 +74,7 @@ def editable_file_blocks(
         else:
             block = render_file(path, content)
         if used + len(block) > budget_chars and blocks:
-            break
+            continue
         blocks.append(block)
         included.append(path)
         used += len(block)

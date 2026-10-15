@@ -6,8 +6,8 @@ modes of the measured agent on the benchmark. Benchmark failure counts come from
 
 ## Platform defects found and fixed
 
-Found by tests, by the pilot task set (outside the benchmark), or by reviewing development-split runs. Each fix has
-a regression test.
+Found by tests, by the pilot task set (outside the benchmark), by reviewing development-split runs, or by the oracle
+run of the benchmark (which uses reference solutions, not the model). Each fix has a regression test.
 
 | # | Defect | How it was found | Fix |
 | --- | --- | --- | --- |
@@ -25,6 +25,7 @@ a regression test.
 | 12 | State-change events recorded the new state as the old one | Compose verification event log | read the old state before the ORM update |
 | 13 | Whole-file answers were rejected because the flag was dropped during edit normalisation | development-split review | flag preserved; workspace-level regression test |
 | 14 | GET explorer endpoints indexed repositories as a side effect | frontend integration review | read endpoints return 409 until an explicit index |
+| 15 | Repair prompts listed files in plan order under the 16,000-character editable budget, so a planned file that did not fit the first attempt (and was named by the failing traceback) was never shown again; a rejected repair also replaced the test-failure report with the rejection message | oracle run of the frozen benchmark: `sensorpipe-dep-01` (6-file numpy 2 upgrade, ~18.7k characters) escalated with the reference solution available | repair context ranks files named in the failure report, then untouched planned files, then changed files, then failing tests; files that do not fit are skipped rather than ending the list; the unresolved check report is carried through rejected attempts. The 75-task partial oracle run was aborted and all reported runs use the fixed revision |
 
 ## Agent failure modes observed on development data
 

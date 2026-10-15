@@ -74,6 +74,12 @@ reference solution as minimal SEARCH/REPLACE hunks (`mode=oracle`). It measures 
 (environments, verification, policy, acceptance plumbing): every oracle failure is a platform or harness defect, not a
 model failure. Oracle results are reported separately and never as model performance.
 
+The first oracle run (`oracle-all-final`) was stopped after 75 tasks because `sensorpipe-dep-01` (a **dev**-split task)
+escalated with the reference solution available: repair prompts never showed a planned file that did not fit the
+editable-content budget (defect 15 in `docs/FAILURE_ANALYSIS.md`). The platform was fixed and every reported run
+(oracle, platform, baseline; run tag `final2`) uses the fixed revision. The task set was not changed. The aborted run is
+kept in the evaluation database with status `aborted`, and its 75 rows are archived outside `reports/`.
+
 ## Commands
 
 ```bash
