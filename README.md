@@ -158,6 +158,7 @@ Integration tests use a real PostgreSQL database (`MODERNISATION_TEST_DATABASE_U
 scripts/build_wheelhouse.sh
 cd backend && .venv/bin/python -m modernisation.evaluation validate --out ../evaluation/validation-report.json
 RUN_TAG=<tag> ../scripts/run_evaluation.sh        # platform + baseline on all 100 tasks, then reports
+MODES="oracle platform baseline" RUN_TAG=<tag> ../scripts/run_evaluation.sh   # adds the oracle harness check first
 ```
 
 Protocol, success definition and integrity controls: [`docs/EVALUATION_PROTOCOL.md`](docs/EVALUATION_PROTOCOL.md).
