@@ -12,6 +12,11 @@ Models express changes as blocks::
 An empty SEARCH section creates a new file. Each SEARCH section must match the current file exactly once
 (trailing-whitespace and uniform-indentation differences are tolerated). This format is easier for models
 to produce reliably than unified diffs and every edit is validated before it touches the workspace.
+
+Fallback: when a response contains no SEARCH/REPLACE blocks but does contain complete
+``<file path="...">...</file>`` blocks (small models often answer this way), each block is treated as a whole-file
+rewrite. For Python files a rewrite is rejected if it drops any existing top-level function or class, so a
+truncated "whole file" cannot silently delete code.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ class Edit:
     path: str
     search: str
     replace: str
+    whole_file: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -57,6 +63,19 @@ def _clean_path(raw: str) -> str:
     return path
 
 
+FILE_BLOCK_RE = re.compile(r'<file\s+path="(?P<path>[^"]+)">\n(?P<body>.*?)\n?</file>', re.DOTALL)
+NUMBERED_LINE_RE = re.compile(r"^\s*\d+\| ?")
+
+
+def strip_line_numbers(text: str) -> str:
+    """Remove ``  12| `` prefixes copied from line-numbered context, only if every non-blank line has one."""
+    lines = text.splitlines(keepends=True)
+    content = [line for line in lines if line.strip()]
+    if content and all(NUMBERED_LINE_RE.match(line) for line in content):
+        return "".join(NUMBERED_LINE_RE.sub("", line, count=1) if line.strip() else line for line in lines)
+    return text
+
+
 def parse_edits(text: str) -> list[Edit]:
     edits = []
     for m in BLOCK_RE.finditer(text):
@@ -65,8 +84,42 @@ def parse_edits(text: str) -> list[Edit]:
             # path may be on the line preceding a code fence
             prefix = text[: m.start()].rstrip().splitlines()
             path = _clean_path(prefix[-1]) if prefix else ""
-        edits.append(Edit(path=path, search=m.group("search"), replace=m.group("replace")))
+        edits.append(
+            Edit(
+                path=path, search=strip_line_numbers(m.group("search")), replace=strip_line_numbers(m.group("replace"))
+            )
+        )
+    if edits:
+        return edits
+    for m in FILE_BLOCK_RE.finditer(text):
+        body = strip_line_numbers(m.group("body"))
+        if body.startswith("```"):
+            body = "\n".join(body.splitlines()[1:])
+            if body.rstrip().endswith("```"):
+                body = body.rstrip()[:-3]
+        edits.append(Edit(path=m.group("path").strip(), search="", replace=body.rstrip("\n") + "\n", whole_file=True))
     return edits
+
+
+def _top_level_names(source: str) -> set[str]:
+    from modernisation.repository_intelligence.python_parser import parse_python
+
+    parsed = parse_python(source.encode())
+    return {s.name for s in parsed.symbols if s.parent is None and s.kind in ("function", "class")}
+
+
+def check_whole_file_rewrite(path: str, old: str | None, new: str) -> None:
+    if not new.strip():
+        raise EditError("empty_rewrite", f"whole-file rewrite of {path} is empty", path)
+    if old is not None and path.endswith(".py"):
+        dropped = _top_level_names(old) - _top_level_names(new)
+        if dropped:
+            raise EditError(
+                "rewrite_drops_definitions",
+                f"whole-file rewrite of {path} drops existing definitions {sorted(dropped)[:6]}; "
+                "use SEARCH/REPLACE blocks for partial changes",
+                path,
+            )
 
 
 def _find_unique(haystack: str, needle: str) -> tuple[int, int] | None:
@@ -151,6 +204,10 @@ def apply_edits(files: dict[str, str | None], edits: list[Edit]) -> dict[str, st
     result = dict(files)
     for edit in edits:
         current = result.get(edit.path)
+        if edit.whole_file:
+            check_whole_file_rewrite(edit.path, current, edit.replace)
+            result[edit.path] = edit.replace
+            continue
         if current is None:
             if edit.search.strip():
                 raise EditError("missing_file", f"{edit.path} does not exist", edit.path)

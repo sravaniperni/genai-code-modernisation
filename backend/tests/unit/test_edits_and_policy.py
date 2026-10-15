@@ -130,3 +130,25 @@ def test_safe_target_refuses_symlink_escape(tmp_path: Path):
         safe_target(ws, "src/link/evil.py")
     assert exc.value.code == "symlink_path"
     assert safe_target(ws, "src/ok.py") == ws.resolve() / "src/ok.py"
+
+
+def test_whole_file_blocks_used_only_without_search_replace():
+    text = '<file path="req.txt">\npackaging==24.2\n</file>\n'
+    edits = parse_edits(text)
+    assert edits == [Edit("req.txt", "", "packaging==24.2\n", whole_file=True)]
+    mixed = text + "a.py\n<<<<<<< SEARCH\nx = 1\n=======\nx = 2\n>>>>>>> REPLACE\n"
+    assert [e.path for e in parse_edits(mixed)] == ["a.py"]
+
+
+def test_whole_file_rewrite_cannot_drop_definitions():
+    old = "def a():\n    return 1\n\n\ndef b():\n    return 2\n"
+    with pytest.raises(EditError) as exc:
+        apply_edits({"m.py": old}, [Edit("m.py", "", "def a():\n    return 3\n", whole_file=True)])
+    assert exc.value.code == "rewrite_drops_definitions"
+    out = apply_edits({"m.py": old}, [Edit("m.py", "", old.replace("return 2", "return 5"), whole_file=True)])
+    assert "return 5" in out["m.py"]
+
+
+def test_copied_line_numbers_are_stripped():
+    text = "a.py\n<<<<<<< SEARCH\n   12|     x = 1\n=======\n   12|     x = 2\n>>>>>>> REPLACE\n"
+    assert parse_edits(text) == [Edit("a.py", "    x = 1\n", "    x = 2\n")]

@@ -104,15 +104,17 @@ class Worker:
                 task = session.get(Task, task_id)
                 if task is None:
                     return
+                if TaskState(task.state) not in RUNNABLE:
+                    # terminal transitions clear the lease themselves; release covers waiting states
+                    if task.lease_owner == self.worker_id:
+                        release(session, task, self.worker_id)
+                    return
                 if lease_lost.is_set() or task.lease_owner != self.worker_id:
                     log.warning("lease lost; stopping", extra={"task_id": task_id})
                     return
                 if task.cancel_requested or cancel_flag.is_set():
                     with contextlib.suppress(IllegalTransition, StaleTask):
                         transition(session, task, TaskState.CANCELLED, "cancelled by user", lease_owner=self.worker_id)
-                    return
-                if TaskState(task.state) not in RUNNABLE:
-                    release(session, task, self.worker_id)
                     return
                 before = (task.state, task.version)
                 try:

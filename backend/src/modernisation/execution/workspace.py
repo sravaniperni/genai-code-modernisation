@@ -170,6 +170,9 @@ class Workspace:
         return self.current_change()
 
     def current_change(self) -> AppliedChange:
+        # Re-hash tracked files from content: a same-size edit within the stat cache's time
+        # granularity would otherwise be invisible to git.
+        self._git("add", "--renormalize", ".")
         self._git("add", "-A")
         diff = self._git("diff", "--cached", "--binary", self.base_commit)
         names = [n for n in self._git("diff", "--cached", "--name-only", self.base_commit).splitlines() if n]

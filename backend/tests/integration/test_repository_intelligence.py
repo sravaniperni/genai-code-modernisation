@@ -119,3 +119,31 @@ def test_git_ops_reject_option_injection(session: Session, sample_repo: Path):
     for bad in ("--upload-pack=touch /tmp/pwned", "main..HEAD", "-n1"):
         with pytest.raises(ValueError):
             git.resolve(bad)
+
+
+def test_same_size_same_second_edit_is_detected(session: Session, sample_repo: Path):
+    """Regression test: git's stat cache must not hide a same-size change with an unchanged mtime.
+
+    Reproduces the failure seen when fixture files were copied with preserved mtimes: the index records
+    a past mtime, the content changes without changing size or mtime, and a plain ``git add -A`` misses it.
+    """
+    import os
+
+    from modernisation.execution.workspace import Workspace
+
+    repo = register_local(session, "inventory", str(sample_repo))
+    git = git_for(repo)
+    ws = Workspace("stat-race", git, git.resolve("main"))
+    ws.create()
+    target = ws.repo_dir / "src/inventory/pricing.py"
+    past = 1_600_000_000_000_000_000  # 2020-09-13, well before the index write time
+    os.utime(target, ns=(past, past))
+    ws._git("update-index", "--refresh")  # index now records the past mtime; entry is not racy
+    content = target.read_text().replace("BULK_THRESHOLD = 10", "BULK_THRESHOLD = 20")
+    assert len(content.encode()) == target.stat().st_size
+    target.write_text(content)
+    os.utime(target, ns=(past, past))  # identical size and mtime to the cached stat
+    change = ws.current_change()
+    assert change.files_changed == ["src/inventory/pricing.py"]
+    assert "BULK_THRESHOLD = 20" in change.diff
+    ws.destroy()
