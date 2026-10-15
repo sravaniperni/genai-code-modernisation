@@ -152,3 +152,11 @@ def test_whole_file_rewrite_cannot_drop_definitions():
 def test_copied_line_numbers_are_stripped():
     text = "a.py\n<<<<<<< SEARCH\n   12|     x = 1\n=======\n   12|     x = 2\n>>>>>>> REPLACE\n"
     assert parse_edits(text) == [Edit("a.py", "    x = 1\n", "    x = 2\n")]
+
+
+def test_requirement_parser_keeps_http_prefixed_packages():
+    """Regression: names such as httpx/httpcore were dropped as if they were URLs."""
+    from modernisation.execution.pyenv import _req_lines
+
+    text = "Flask==2.2.5\nhttpx==0.23.3  # client\nhttpcore==0.16.3\nhttps://example.invalid/pkg.whl\n-r other.txt\n"
+    assert _req_lines(text) == ["Flask==2.2.5", "httpx==0.23.3", "httpcore==0.16.3"]

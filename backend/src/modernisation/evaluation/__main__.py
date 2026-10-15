@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
         if name == "validate":
             p.add_argument("--out", type=Path, default=None)
         if name == "run":
-            p.add_argument("--mode", required=True, choices=["platform", "baseline"])
+            p.add_argument("--mode", required=True, choices=["platform", "baseline", "oracle"])
             p.add_argument("--run-key", required=True)
             p.add_argument("--final", action="store_true", help="require the frozen task-set version")
             p.add_argument("--task-timeout-s", type=float, default=2400.0)

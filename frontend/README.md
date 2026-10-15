@@ -128,22 +128,17 @@ e2e/                         Playwright specs and helpers
 scripts/e2e-backend.sh       real-backend startup for E2E
 ```
 
-## Known backend gaps
+## Backend contract notes
 
-These are worked around in the UI, not fixed in the backend:
+Resolved in the backend since the first version of this UI: `GET /api/meta` now also returns
+`terminal_states`, `restartable_states` and `runnable_states`; check runs include a `passed` field;
+`/api/tasks/{id}/model-calls` returns 404 for unknown tasks; `/api/health` lists workers holding active leases
+(`active_workers`, a lower bound because idle workers hold none); and read endpoints (`/tree`, `/file`,
+`/search`) no longer index implicitly but return 409 until the repository is indexed.
 
-- No endpoint reports whether a worker is running, so a `QUEUED` task cannot be distinguished from a stalled
-  one; the monitor states this plainly.
-- `GET /api/meta` lists states but not which are terminal/restartable or the allowed transitions; the UI
-  mirrors `TERMINAL` and the restart rule from `agents/states.py` / `agents/store.py` in `src/lib/states.ts`.
-- `GET /api/tasks/{id}/checks` has no `passed` field; the UI uses `summary.passed` when present, otherwise
-  exit code 0 without timeout.
+Still open:
+
 - No push channel (SSE/WebSocket) for events; the UI polls `?after_id=` every 2 s.
-- There is no read endpoint for webhook deliveries, so GitHub-originated activity is visible only through
-  task events.
-- `GET /api/tasks/{id}/model-calls` returns `[]` for a task that does not exist (no 404), unlike the other
-  task sub-resources.
+- No read endpoint for webhook deliveries; GitHub-originated activity is visible only through task events.
 - `GET /api/tasks` has no pagination cursor or total count (only `limit`, default 100).
-- Read endpoints such as `GET /tree`, `/file` and `/search` index the requested ref on demand, so a GET can
-  be slow and has a side effect; the explorer only reads the index after it exists and makes indexing an
-  explicit action.
+- The UI still mirrors the terminal/restart rules in `src/lib/states.ts` rather than reading them from `/api/meta`.

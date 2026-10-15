@@ -73,7 +73,10 @@ def _req_lines(text: str) -> list[str]:
     lines = []
     for raw in text.splitlines():
         line = raw.split("#", 1)[0].strip()
-        if not line or line.startswith(("-e", "--", "-r", "-c", "git+", "http")):
+        # Skip options, nested files and direct URL/VCS references; never package names such as "httpx".
+        if not line or line.startswith(
+            ("-e", "--", "-r", "-c", "git+", "hg+", "svn+", "bzr+", "http://", "https://", "file:")
+        ):
             continue
         lines.append(line)
     return lines

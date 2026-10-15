@@ -78,8 +78,8 @@ class EvaluationRunner:
         task_timeout_s: float = 2400.0,
         evidence_dir: Path | None = None,
     ):
-        if mode not in ("platform", "baseline"):
-            raise ValueError("mode must be 'platform' or 'baseline'")
+        if mode not in ("platform", "baseline", "oracle"):
+            raise ValueError("mode must be 'platform', 'baseline' or 'oracle'")
         self.eval_dir = eval_dir.resolve()
         self.mode = mode
         self.run_key = run_key
@@ -118,7 +118,7 @@ class EvaluationRunner:
                     "max_output_tokens": s.model_max_output_tokens,
                     "structured_output": s.model_structured_output,
                     "model_base_url": s.model_base_url,
-                    "strategy": "agentic" if self.mode == "platform" else "single_shot",
+                    "strategy": "single_shot" if self.mode == "baseline" else "agentic",
                     "sandbox": {
                         "timeout_s": s.sandbox_command_timeout_s,
                         "memory_mb": s.sandbox_memory_mb,
@@ -152,8 +152,12 @@ class EvaluationRunner:
                 raise RuntimeError(f"fixture for {task.id} is not deterministic")
             return repo.id, sha
 
-    def _engine(self) -> WorkflowEngine:
+    def _engine(self, tasks: list[BenchmarkTask]) -> WorkflowEngine:
         settings = self.settings
+        if self.mode == "oracle":
+            from modernisation.evaluation.oracle import oracle_factory
+
+            return WorkflowEngine(settings=settings, model_factory=oracle_factory({t.id: t for t in tasks}))
 
         def factory(task: Task):  # type: ignore[no-untyped-def]
             return build_client(settings, db_sink(task.id, task.evaluation_run_id))
@@ -167,7 +171,7 @@ class EvaluationRunner:
             done = set(
                 session.scalars(select(EvaluationResult.benchmark_task_id).where(EvaluationResult.run_id == run_id))
             )
-        engine = self._engine()
+        engine = self._engine(tasks)
         self.evidence.parent.mkdir(parents=True, exist_ok=True)
         for index, task in enumerate(tasks, start=1):
             if task.id in done:
@@ -207,9 +211,9 @@ class EvaluationRunner:
                 origin="evaluation",
                 evaluation_run_id=run_id,
                 config={
-                    "max_attempts": task.max_attempts if self.mode == "platform" else 1,
+                    "max_attempts": task.max_attempts if self.mode != "baseline" else 1,
                     "auto_complete": True,
-                    "strategy": "agentic" if self.mode == "platform" else "single_shot",
+                    "strategy": "single_shot" if self.mode == "baseline" else "agentic",
                     "context_chars": self.settings.eval_context_chars,
                     "edit_context_chars": self.settings.eval_edit_context_chars,
                 },
@@ -273,7 +277,7 @@ class EvaluationRunner:
                 "details": {"reason": reason},
             }
         candidate: str | None = None
-        if self.mode == "platform":
+        if self.mode in ("platform", "oracle"):
             if state != TaskState.COMPLETED.value:
                 return {
                     **base,
