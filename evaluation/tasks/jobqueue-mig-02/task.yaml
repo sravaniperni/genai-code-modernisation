@@ -1,0 +1,24 @@
+id: jobqueue-mig-02
+repo: jobqueue
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated Event.isSet and Condition.notifyAll in the worker pool
+request: |
+  On Python 3.12 the worker pool's shutdown and wake-up signalling uses `threading.Event.isSet()` and
+  `threading.Condition.notifyAll()`. Both are deprecated aliases that emit `DeprecationWarning` and will be
+  removed; in our upcoming CI configuration (`-W error::DeprecationWarning`) the pool cannot report whether it
+  is running, enqueuing a job fails while trying to wake the workers, and worker threads crash.
+
+  Please switch to the supported APIs without changing behaviour: `running` reflects whether the pool has
+  been started and not stopped, idle workers wake up as soon as a job is enqueued (they must not wait for
+  the poll interval), `stop()` wakes idle workers immediately, lets a job that is already running finish,
+  returns `False` if workers are still busy when the timeout expires and `True` once they have all exited.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay reintroduces Event.isSet (running property and the worker loop) and Condition.notifyAll
+  (wake) in workers.py. With warnings as errors the running property raises, the enqueue listener raises and
+  worker threads die. Acceptance uses a 60 s poll interval so only working notifications make the tests pass
+  quickly; it checks running, wake-up on enqueue, prompt stop, graceful stop with a busy worker, and that
+  the aliases are gone from workers.py.

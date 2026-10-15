@@ -1,0 +1,19 @@
+id: releasebot-dep-07
+repo: releasebot
+category: dependency_upgrade
+split: heldout
+title: Upgrade packaging to 24.2
+request: |
+  We want to move the CI image to pytest 9 and current pip tooling, which need packaging >= 22, but
+  releasebot still pins packaging 21.3. Please upgrade packaging from 21.3 to 24.2 and pin it exactly in
+  requirements.txt (`packaging==24.2`).
+
+  `releasebot check-index` and the PEP 440 helpers must behave as before. In particular the version lists
+  we export from our package index contain historical junk entries such as `2019-snapshot`, `latest` or
+  `nightly-20260101`; those have always been ignored and must not make the check fail.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  packaging 22 removed LegacyVersion (imported by releasebot.pep440, so the module and the CLI fail to
+  import) and parse() now raises InvalidVersion for non-PEP 440 strings. Acceptance checks the pinned
+  version, filtering/sorting of published versions with junk, conversions, the publishability rules and
+  the check-index command.

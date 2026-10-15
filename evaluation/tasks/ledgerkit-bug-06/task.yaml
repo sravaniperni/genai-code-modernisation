@@ -1,0 +1,24 @@
+id: ledgerkit-bug-06
+repo: ledgerkit
+category: bug_fix
+split: heldout
+title: Decimal-comma amounts are imported 100 times too large
+request: |
+  Importing CSV exports from our German and French bank accounts produces absurd amounts. These files use
+  a decimal comma and a dot as thousands separator, so we import them with
+
+      ledgerkit --ledger books.json import-csv --decimal , --thousands . export.csv
+
+  (i.e. `read_csv(..., decimal_sep=",", thousands_sep=".")`). A debit of `1.234,56` is imported as
+  123456 and `12,50` as 1250; `parse_amount("1.234,56", ",", ".")` returns `Decimal("123456")`.
+
+  Expected: with `decimal_sep=","` and `thousands_sep="."`, `1.234,56` → 1234.56, `12,50` → 12.50,
+  `1.234.567,89` → 1234567.89, `-1.000,00` → -1000.00 and `(3,10)` → -3.10 (parentheses and minus signs
+  keep working, as do currency symbols such as `€ 7,00`). The default format (`1,234.56`) and other
+  separator combinations such as `1'234.56` must keep working as before.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup swaps the order of the two separator replacements in money.parse_amount, so with a "."
+  thousands separator the freshly converted decimal point is removed as well. Visible tests only use the
+  default US format. Acceptance checks parse_amount, read_csv and the import-csv CLI with European
+  formatting plus unchanged US/Swiss formats.

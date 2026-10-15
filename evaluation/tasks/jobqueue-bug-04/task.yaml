@@ -1,0 +1,24 @@
+id: jobqueue-bug-04
+repo: jobqueue
+category: bug_fix
+split: heldout
+title: Jobs without a registered handler stay RUNNING forever
+request: |
+  After we retired the `thumbnail` handler from our workers, the `thumbnail` jobs that were still queued never
+  finished. Each one was claimed by a worker, the worker logged `HandlerNotFound: no handler registered for
+  'thumbnail'` and moved on, and the job has been in the RUNNING state ever since: it never shows up as
+  failed, its unique key stays blocked, no failure webhook is sent and nothing is recorded in the execution
+  history.
+
+  To reproduce: create a `JobQueue` without a registry, enqueue a job named `thumbnail`, and run a
+  `WorkerPool` whose executor's registry has no `thumbnail` handler (`pool.drain()` or worker threads).
+  Expected: such a job must not be left RUNNING. It has to end up FAILED, with `finished_at` set and
+  `last_error` naming the missing handler, the configured notifier and history must hear about the failure
+  like for any other failed job, and the worker must carry on with the remaining jobs.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay looks the handler up before the try block in Executor.execute, so HandlerNotFound escapes,
+  WorkerPool._process logs it and the claimed job is never updated. Acceptance drives jobs through
+  WorkerPool.drain (advancing a frozen clock so fixes that retry the job first are also accepted) and through
+  worker threads, and checks the final FAILED state, finished_at, last_error, notifier, history, unique key
+  release and that other jobs still run.

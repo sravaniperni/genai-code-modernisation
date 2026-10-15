@@ -1,0 +1,20 @@
+id: sensorpipe-dep-07
+repo: sensorpipe
+category: dependency_upgrade
+split: heldout
+title: Upgrade semver to 3.0.4
+request: |
+  Upgrade semver from 2.13.0 to 3.0.4 and pin it exactly in requirements.txt.
+
+  The calibration-management service that produces our calibration files has moved to semver 3 and shares the
+  gateway environment with sensorpipe.
+
+  Calibration format handling must not change: calibration files and bundled tables declare a semantic
+  `format_version`; versions 2.x up to and including 2.1.0 (pre-releases of those included) are accepted, while
+  anything else (other major versions, newer minor versions, malformed or missing versions) is rejected with
+  CalibrationError. The calibration format metadata written into JSON reports must stay the same.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  calibration.py uses semver.VersionInfo.isvalid (renamed to is_valid in semver 3) and VersionInfo._asdict
+  (removed in semver 3). Acceptance checks the installed version, accept/reject behaviour (including that bad input
+  raises CalibrationError rather than AttributeError), metadata dicts and JSON report output.

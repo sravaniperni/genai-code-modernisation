@@ -1,0 +1,22 @@
+id: sensorpipe-bug-06
+repo: sensorpipe
+category: bug_fix
+split: heldout
+title: outdated() compares firmware versions as strings
+request: |
+  `DeviceRegistry.outdated()` reports up-to-date devices and misses old ones once firmware version components
+  reach two digits.
+
+  Examples from the fleet report:
+  - with a minimum of `9.4`, transmitters on firmware `10.1.0` are listed as outdated (the fleet job then scheduled
+    them for a "downgrade"), while
+  - with a minimum of `10.0`, a device on `9.10.0` is not listed although it is older.
+
+  Feature gating (`supports()`) gets these comparisons right. Expected: `outdated()` compares firmware as versions
+  in the same way, so `4.2` and `4.2.0` are the same version, and legacy vendor firmware strings (e.g. `FW-3.1b`)
+  count as older than any release. Results stay ordered by device id.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Setup makes DeviceRegistry.outdated compare raw firmware strings lexicographically. Visible tests only use
+  single-digit components where string and version order agree. Acceptance reproduces both examples and checks
+  equal-but-differently-spelled versions and legacy firmware.

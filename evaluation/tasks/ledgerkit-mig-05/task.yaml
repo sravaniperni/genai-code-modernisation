@@ -1,0 +1,28 @@
+id: ledgerkit-mig-05
+repo: ledgerkit
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated logging warn() calls
+request: |
+  Importing CSV files or bank feeds that contain skippable rows, and converting with an outdated
+  exchange rate, emit
+
+      DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead
+      DeprecationWarning: The 'warn' function is deprecated, use 'warning' instead
+
+  because ledgerkit still calls the deprecated `Logger.warn()` / `logging.warn()` aliases. We are making
+  CI fail on these warnings, so please replace the deprecated calls everywhere in the package.
+
+  The log output must stay the same: the same messages at WARNING level, e.g. `skipping blank CSV row 4`,
+  `skipping CSV row 6: no account given`, `skipping zero-amount bank feed line 2` and
+  `using stale EUR/USD rate from 2024-01-01 for 2024-02-01`, and the imports/conversions themselves must
+  return exactly what they return today.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error:The 'warn':DeprecationWarning"]
+notes: |
+  importers.py uses Logger.warn (3 calls) and rates.py the module-level logging.warn. The acceptance run
+  turns exactly the logging-alias DeprecationWarnings ("The 'warn' method/function is deprecated ...")
+  into errors (the same code paths also hit the separate utcnow() deprecation, which is out of scope here)
+  and checks the WARNING records (level + message, any logger), unchanged results, and that no .warn(
+  logging calls remain.

@@ -1,0 +1,27 @@
+id: sensorpipe-mig-04
+repo: sensorpipe
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated threading aliases in the uplink forwarder
+request: |
+  Creating an uplink `Forwarder` on Python 3.12 emits
+
+      DeprecationWarning: setDaemon() is deprecated, set the daemon attribute instead
+
+  and the worker loop then triggers `DeprecationWarning: isSet() is deprecated, use is_set() instead` on every
+  cycle (also when `running` is checked). Our gateway CI runs with DeprecationWarnings as errors, so the forwarder
+  cannot even be constructed there. Please replace the deprecated camelCase threading APIs in sensorpipe.
+
+  The forwarder's behaviour must stay the same: it runs in a daemon thread with the configured name (so it never
+  blocks interpreter shutdown on the gateway), `flush()` runs a forwarding cycle immediately and reports whether it
+  finished in time, rejected batches and exceptions from the uplink or the fetch callable are counted in
+  `failures` and retried on the next cycle without stopping the worker, and `stop()` ends the thread.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  uplink.Forwarder calls Thread.setDaemon (in __init__, main thread) and Event.isSet (worker loop and the
+  running property); both emit DeprecationWarning on 3.12. Acceptance constructs and drives forwarders with
+  warnings as errors (fails immediately at the task start), checks daemon/name, flush, failure accounting and
+  stop, and scans src/ for the deprecated camelCase threading aliases. (Substitute for the suggested
+  shutil.rmtree(onerror=) task: CPython 3.12.3 does not emit a runtime DeprecationWarning for onerror.)

@@ -1,0 +1,22 @@
+id: jobqueue-bug-06
+repo: jobqueue
+category: bug_fix
+split: heldout
+title: Payload size limit is not enforced for non-ASCII payloads
+request: |
+  `max_payload_bytes` is supposed to cap the size of the stored payload in bytes (payloads are stored as
+  UTF-8 JSON), but payloads containing non-ASCII text slip through. Our Postgres column is sized for the
+  64 KiB default and we keep getting database errors for jobs that `JobQueue.enqueue()` accepted, always for
+  customers whose data contains accented letters, CJK text or emoji.
+
+  Example: `payload_size({"city": "Zürich"})` returns 17, but the stored payload `{"city":"Zürich"}` is 18
+  bytes. With `JobQueue(max_payload_bytes=1024)`, a payload `{"note": "€" * 600}` (more than 1,800 bytes) is
+  accepted instead of raising `PayloadTooLarge`. Expected: `payload_size()` reports the number of bytes that
+  will be stored, `check_payload_size()` and `JobQueue` reject payloads above the limit (a payload of exactly
+  the limit is allowed), and `PayloadTooLarge.size` reports bytes.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay measures the encoded JSON text with len() (characters) instead of its UTF-8 byte length;
+  the encoding uses ensure_ascii=False so the two differ for non-ASCII text. Visible tests only use ASCII
+  payloads. Acceptance checks byte sizes for 2-, 3- and 4-byte characters, the exact-limit boundary,
+  PayloadTooLarge.size and enforcement through JobQueue.enqueue with and without a payload schema.

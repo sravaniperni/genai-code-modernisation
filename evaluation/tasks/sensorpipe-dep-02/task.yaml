@@ -1,0 +1,21 @@
+id: sensorpipe-dep-02
+repo: sensorpipe
+category: dependency_upgrade
+split: dev
+title: Upgrade packaging to 24.2
+request: |
+  Upgrade packaging from 21.3 to 24.2 and pin it exactly in requirements.txt.
+
+  The gateway build image now ships tooling that requires packaging>=22 (newer pip/pytest tooling), and our
+  21.3 pin makes sensorpipe impossible to install next to it.
+
+  Keep the device registry working exactly as it does today. In particular, several hundred older field
+  transmitters still report vendor firmware strings that are not PEP 440 versions (for example `FW-3.1b`):
+  the registry must keep accepting them, order them as older than any release version, report them as
+  outdated, and never enable a firmware-gated feature for them.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  devices.py imports packaging.version.LegacyVersion and relies on parse() returning LegacyVersion for vendor
+  strings; both were removed in packaging 22 (ImportError / InvalidVersion). Acceptance checks the installed
+  version, numeric gating, prerelease handling, and the legacy-firmware semantics (ordering, outdated, gating)
+  through the public API only, so any custom ordering wrapper is accepted.

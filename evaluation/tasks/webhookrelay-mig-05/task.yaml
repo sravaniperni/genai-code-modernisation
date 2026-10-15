@@ -1,0 +1,28 @@
+id: webhookrelay-mig-05
+repo: webhookrelay
+category: deprecated_api_migration
+split: heldout
+title: Replace deprecated threading camelCase APIs in the retry scheduler
+request: |
+  With warnings enabled, starting the relay prints
+
+    DeprecationWarning: setDaemon() is deprecated, set the daemon attribute instead
+    DeprecationWarning: isSet() is deprecated, use is_set() instead
+    DeprecationWarning: getName() is deprecated, get the name attribute instead
+
+  all coming from the retry scheduler's worker thread handling in `webhookrelay/scheduler.py`. These
+  camelCase threading aliases have been deprecated since Python 3.10. Please migrate them to the supported
+  APIs.
+
+  The scheduler must behave exactly as before: `start()` launches a single daemon worker thread named
+  `webhookrelay-retry` (calling it again while running does nothing), the worker hands due retries to the
+  callback, `running` reflects whether the worker is active, `describe()` reports the worker's name,
+  `stop()` stops and joins the worker, and the scheduler can be started again after being stopped.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Start state: RetryScheduler uses Thread.setDaemon(True), Event.isSet() (in `running` and the worker loop)
+  and Thread.getName() in describe(). Acceptance (DeprecationWarning as error) exercises start/stop/restart,
+  idempotent start, daemon flag and name, worker processing of due items, describe(), and checks the
+  deprecated aliases are gone from src.

@@ -1,0 +1,27 @@
+id: webhookrelay-bug-04
+repo: webhookrelay
+category: bug_fix
+split: heldout
+title: Catch-all routing rule wins over earlier rules with the same priority
+request: |
+  After we added a catch-all rule at the end of our rule list, every event goes to the catch-all target
+  only. Our rules (none of them sets a priority, so they are all priority 0):
+
+    rules:
+      - {name: github-push, events: [push], targets: [ci]}
+      - {name: orders, events: ["order.*"], targets: [erp]}
+      - {name: catch-all, targets: [archive]}
+
+  A `push` event should be delivered to `ci`, but it is delivered to `archive`. The routing documentation
+  (module docstring of webhookrelay/routing.py) says rules are evaluated by descending priority and, among
+  rules with the same priority, in the order they are declared, with the first matching rule winning unless
+  it has `continue: true`. Rules with different priorities seem to be ordered correctly.
+
+  Please fix rule precedence so ties are evaluated in declaration order. When `continue: true` rules
+  combine targets, the combined target list should also follow that evaluation order.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Injected defect (routing.py): Router sorts by (priority, declaration index) with reverse=True, which keeps
+  higher priorities first but evaluates equal-priority rules last-declared-first. Visible tests only use
+  distinct priorities when order matters. Acceptance checks the reported configuration (via load_config and
+  Router and through the Dispatcher), mixed priorities with ties, continue chains, and matching_rules order.

@@ -1,0 +1,24 @@
+id: ledgerkit-dep-07
+repo: ledgerkit
+category: dependency_upgrade
+split: heldout
+title: Upgrade packaging to 24.2
+request: |
+  Please upgrade packaging from 21.3 to 24.2 and pin it exactly (`packaging==24.2`) in requirements.txt.
+  We are stuck on pytest 8 because pytest 9 requires packaging>=22, and the rest of our build tooling
+  has moved on as well.
+
+  Template version handling in `ledgerkit.versioning` / `ledgerkit.templates` must keep working as it
+  does today:
+
+  * free-form, non PEP 440 template versions (like the bundled legacy-retail template's `"2019.4-CH"`)
+    are still accepted and reported by `is_legacy_version()`;
+  * `latest_template_version()` still treats such legacy versions as older than every PEP 440 version
+    and compares PEP 440 versions by their PEP 440 ordering;
+  * `satisfies()` / `templates.is_supported()` keep matching PEP 440 specifiers (pre-releases included),
+    a legacy version never satisfies a requirement, and an invalid requirement raises `FormatError`.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  packaging 22 removed LegacyVersion (ImportError at import of ledgerkit.versioning, which also breaks
+  formats/templates/cli) and parse() now raises InvalidVersion for non PEP 440 strings. Acceptance checks
+  the installed version, legacy detection, ordering, specifier matching and template support checks.

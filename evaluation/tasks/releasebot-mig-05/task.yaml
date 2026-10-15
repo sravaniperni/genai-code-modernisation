@@ -1,0 +1,25 @@
+id: releasebot-mig-05
+repo: releasebot
+category: deprecated_api_migration
+split: heldout
+title: Migrate bundled template loading off the legacy importlib.resources API
+request: |
+  Loading the bundled changelog templates on Python 3.12 emits
+
+      DeprecationWarning: read_text is deprecated. Use files() instead.
+
+  (plus the same for `contents` and `is_resource`). We run the test-suite with deprecation warnings as
+  errors, so anything that lists or loads bundled templates now fails. Please move the template loading
+  in `releasebot.templating` to the current `importlib.resources` API.
+
+  Behaviour must stay the same: `list_bundled_templates()` returns the sorted names of the bundled `.j2`
+  templates; `load_template_source()` prefers templates found in the given search directories, falls back
+  to the bundled ones, returns the text decoded as UTF-8, and raises `TemplateNotFoundError` for unknown
+  names and for names containing path separators or starting with a dot.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay uses importlib.resources.contents/is_resource/read_text (deprecated in 3.11/3.12) in
+  releasebot.templating. Acceptance (with -W error) checks listing, loading (UTF-8 content), search-path
+  precedence, error cases, and that the legacy calls are gone.

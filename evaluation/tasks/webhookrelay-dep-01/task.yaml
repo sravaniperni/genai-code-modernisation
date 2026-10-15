@@ -1,0 +1,26 @@
+id: webhookrelay-dep-01
+repo: webhookrelay
+category: dependency_upgrade
+split: dev
+title: Upgrade PyJWT to 2.10.1
+request: |
+  Our dependency scanner flags PyJWT 1.7.1 (CVE-2022-29217, algorithm confusion; fixed in 2.4.0), and the
+  1.x line is no longer maintained. Please upgrade PyJWT from 1.7.1 to 2.10.1 and pin it exactly
+  (PyJWT==2.10.1) in requirements.txt.
+
+  JWTs are used in two places and both must keep working after the upgrade:
+  - sources configured with `jwt_issuers` authenticate inbound webhooks with `Authorization: Bearer <token>`
+    (HS256 tokens signed with the issuer's shared secret; audience, issuer and expiry are checked, and a
+    bad token must still be answered with 401);
+  - targets with `auth: jwt` get a short-lived HS256 bearer token attached to every delivery.
+
+  Expired tokens, tokens from unknown issuers and tokens with a wrong signature must still be rejected with
+  a clear SignatureError message, as today. Keep the test suite green.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  PyJWT 2.x: jwt.encode returns str (the code calls .decode("ascii") on it -> AttributeError for every
+  auth: jwt delivery); jwt.decode requires `algorithms` (without it every inbound token is rejected as
+  malformed/invalid); `verify=False` is ignored (must use options={"verify_signature": False}); the
+  jwt.ExpiredSignature alias was removed (AttributeError as soon as any decode error reaches that except
+  clause). Acceptance checks the installed version, token issuing, inbound verification (valid, expired,
+  unknown issuer, wrong key, alg=none, wrong audience, garbage), JWT delivery headers and the HTTP endpoint.

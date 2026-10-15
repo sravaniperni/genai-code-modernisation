@@ -1,0 +1,27 @@
+id: releasebot-mig-04
+repo: releasebot
+category: deprecated_api_migration
+split: heldout
+title: Replace pkgutil.find_loader() in optional-dependency checks
+request: |
+  On Python 3.12 `releasebot publish` warns
+
+      DeprecationWarning: 'pkgutil.find_loader' is deprecated and slated for removal in Python 3.14;
+      use importlib.util.find_spec() instead
+
+  for every publisher it checks, and with warnings-as-errors in CI the command fails. The call is in the
+  helper that tells whether a publisher's optional modules (its `requires`) are installed. Please migrate
+  away from `pkgutil.find_loader`.
+
+  The helper's contract must stay the same: it returns True/False without raising — also for dotted names
+  whose parent package does not exist and for an empty name — and it must not import the module it checks
+  (some optional modules are slow or have side effects on import). `Publisher.missing_requirements()`
+  must keep listing exactly the missing modules, in order.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay implements releasebot.plugins.module_available with pkgutil.find_loader (deprecated
+  in 3.12). importlib.util.find_spec raises ModuleNotFoundError for a missing parent package and
+  ValueError for "", so a naive replacement breaks the "never raises" contract that the acceptance
+  tests check, along with "does not import the module" and missing_requirements().

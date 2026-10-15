@@ -1,0 +1,8 @@
+click==8.1.8
+semver==2.13.0
+packaging==21.3
+Jinja2==3.0.3
+Markdown==3.3.7
+ruamel.yaml==0.17.21
+importlib-metadata==4.13.0
+httpx==0.23.3

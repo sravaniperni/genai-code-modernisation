@@ -1,0 +1,26 @@
+id: sensorpipe-mig-01
+repo: sensorpipe
+category: deprecated_api_migration
+split: dev
+title: Stop using datetime.utcfromtimestamp for epoch timestamps
+request: |
+  Our gateway CI job runs the test suite on Python 3.12 with `-W error::DeprecationWarning`, and it fails as soon
+  as epoch timestamps are ingested:
+
+      DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a
+      future version. Use timezone-aware objects to represent datetimes in UTC
+
+  Please migrate sensorpipe away from `datetime.utcfromtimestamp()`.
+
+  Behaviour must not change: epoch seconds and epoch milliseconds (as numbers or numeric strings, in CSV/JSON
+  input or passed directly) must still become timezone-aware UTC datetimes with exactly the same values,
+  including sub-second precision, and series rebuilt from epoch arrays after resampling must keep their UTC
+  timestamps and their `gap` markers for empty slots.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  readings.from_epoch and ReadingBatch.from_arrays call datetime.utcfromtimestamp (DeprecationWarning on 3.12).
+  Acceptance exercises both through parse_timestamp, read_json/read_csv and from_arrays with warnings as errors,
+  checks values/awareness/precision, and asserts no utcfromtimestamp call remains in src/. The exercised paths use
+  no other deprecated API.

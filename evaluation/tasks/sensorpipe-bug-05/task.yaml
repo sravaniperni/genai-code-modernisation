@@ -1,0 +1,22 @@
+id: sensorpipe-bug-05
+repo: sensorpipe
+category: bug_fix
+split: heldout
+title: Naive local timestamps use the winter UTC offset all year
+request: |
+  Naive timestamps from devices in time zones with daylight saving time are converted to UTC with the winter
+  offset all year round.
+
+  Example: a Berlin site (`timezone: Europe/Berlin`) logs `2024-07-01 12:00:00` local time. sensorpipe stores it as
+  11:00 UTC, but 12:00 CEST is 10:00 UTC, so all summer readings are shifted by one hour against the devices that
+  report UTC (it shows up as a one-hour lag in the correlation dashboards). January data from the same site are
+  converted correctly. Southern-hemisphere sites (e.g. `Australia/Sydney`) are wrong in the other half of the year.
+  This affects `to_utc()` as well as CSV/JSON ingestion and `parse_timestamp()` with a site time zone.
+
+  Expected: naive local timestamps are converted with the UTC offset that is in effect at that local time,
+  including around the DST transitions; timestamps that already carry an offset are unaffected.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Setup replaces the zoneinfo-based localisation in timeutil.to_utc with a per-year cached offset taken on 1 January
+  (a "performance optimisation"), which ignores DST. Visible tests only use winter dates. Acceptance covers summer
+  dates in both hemispheres, transition days, ingestion and parse_timestamp.

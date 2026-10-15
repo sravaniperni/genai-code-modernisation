@@ -1,0 +1,31 @@
+id: webhookrelay-bug-06
+repo: webhookrelay
+category: bug_fix
+split: heldout
+title: Retries scheduled at the wrong time for Retry-After dates and datetimes with a UTC offset
+request: |
+  Retries for one of our partners fire hours late. At 2026-01-01T07:00:00Z their endpoint answered a
+  delivery with
+
+    HTTP/1.1 503 Service Unavailable
+    Retry-After: Thu, 01 Jan 2026 09:30:00 +0200
+
+  i.e. "try again at 07:30 UTC". The delivery record shows `next_retry_at: 2026-01-01T09:30:00Z` and the
+  retry indeed only happens at 09:30 UTC, two hours late. Retry-After values in GMT (or as a number of
+  seconds) work fine.
+
+  We see the same thing with a plugin that calls `RetryScheduler.schedule()` with timezone-aware datetimes
+  in India time (+05:30): items come out of the queue 5.5 hours early, and `describe()` reports the wrong
+  `next_due`.
+
+  Expected: a point in time is honoured whatever UTC offset it is expressed in (Retry-After HTTP dates and
+  datetimes passed to the scheduler are converted to UTC, not relabelled), naive datetimes keep being
+  treated as UTC, and due items are still handed out in chronological order.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Injected defect (scheduler.py): parse_retry_after() and RetryScheduler.schedule() use
+  value.replace(tzinfo=UTC), which relabels an aware datetime instead of converting it (correct for naive
+  and UTC values, wrong for any other offset). Visible tests only use GMT dates and UTC/naive datetimes.
+  Acceptance checks Retry-After dates with several offsets, scheduling with aware non-UTC datetimes
+  (stored due time, describe(), run_pending timing and ordering across offsets), naive handling, and the
+  reported scenario end-to-end through the Dispatcher.

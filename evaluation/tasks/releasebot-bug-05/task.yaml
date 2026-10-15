@@ -1,0 +1,20 @@
+id: releasebot-bug-05
+repo: releasebot
+category: bug_fix
+split: heldout
+title: No release is proposed when there are only bug fixes
+request: |
+  Since v1.4.2 there are three `fix:` commits on main (plus a docs commit), but `releasebot next` prints
+  "No release needed." We expected 1.4.3. As soon as anybody merges a `feat:` commit the next version is
+  computed correctly (1.5.0), so it looks like fixes are simply not counted.
+
+  Commits whose type is listed under `bump.patch` (by default `fix` and `perf`) must trigger a patch
+  release when nothing requires a bigger bump — with or without a scope, also for pre-releases
+  (`1.4.3-rc.1`) and for custom patch types such as `deps`. Other commit types (docs, chore, ci, ...) must
+  still not trigger a release.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay makes bumping.commit_level compare commit.scope (instead of commit.type) with the
+  patch types, so fix/perf commits yield BumpLevel.NONE unless their scope happens to be "fix"/"perf".
+  Visible tests never compute a bump from fixes alone. Acceptance checks determine_bump/next_version with
+  fixes only, custom patch types, unchanged other levels, release planning and the CLI.

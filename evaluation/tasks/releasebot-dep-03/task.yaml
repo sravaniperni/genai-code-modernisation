@@ -1,0 +1,20 @@
+id: releasebot-dep-03
+repo: releasebot
+category: dependency_upgrade
+split: heldout
+title: Upgrade Jinja2 to 3.1.6
+request: |
+  Security asked us to move off Jinja2 3.0.x: several sandbox/xmlattr advisories are only fixed in the
+  3.1 series. Please upgrade Jinja2 from 3.0.3 to 3.1.6 and pin it exactly in requirements.txt
+  (`Jinja2==3.1.6`); if releasebot ends up importing any other package directly, pin that one as well.
+
+  Changelog entries and release notes must render exactly as before — this includes the commit links and
+  scope aliases available to custom changelog templates, localised dates, and the HTML release-notes page
+  (escaped project title, unescaped rendered body).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Jinja2 3.1 removed contextfilter/environmentfilter (used in releasebot.templating for the
+  commit_link and scope_label filters) and the Markup/escape re-exports (used in releasebot.notes);
+  the imports fail at module import time. Acceptance checks the pinned version, changelog rendering
+  through bundled and custom templates (all filters), filters used directly on the environment, and the
+  HTML notes page escaping.

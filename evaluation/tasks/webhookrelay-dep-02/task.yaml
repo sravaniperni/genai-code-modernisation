@@ -1,0 +1,22 @@
+id: webhookrelay-dep-02
+repo: webhookrelay
+category: dependency_upgrade
+split: dev
+title: Upgrade Jinja2 to 3.1.6
+request: |
+  Jinja2 3.0.3 is affected by several published advisories that are only fixed in the 3.1 line
+  (e.g. CVE-2024-22195, CVE-2024-56326, CVE-2025-27516). Please upgrade Jinja2 from 3.0.3 to 3.1.6 and pin
+  it exactly (Jinja2==3.1.6) in requirements.txt.
+
+  Notification bodies are rendered from Jinja2 templates (the built-in `chat.txt` and `email.html` templates
+  and any templates a deployment supplies). The rendered output must stay byte-for-byte the same after the
+  upgrade, including the custom `nl2br` and `event_link` filters (which behave differently in autoescaped
+  HTML templates and in plain-text templates) and Markdown bodies embedded in HTML templates. Deliveries to
+  targets that use a template must keep working.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Jinja2 3.1 removed jinja2.Markup, jinja2.escape and the contextfilter/evalcontextfilter decorators
+  (renamed pass_context/pass_eval_context in 3.0). templating.py imports all of them, so with only the pin
+  bumped the module fails to import and every templated delivery breaks. Flask 2.2.5 is compatible with
+  Jinja2 3.1.6, so no other pin needs to change. Acceptance checks the version and exact rendering of
+  built-in and custom templates in autoescaped and plain-text contexts, plus a templated delivery.

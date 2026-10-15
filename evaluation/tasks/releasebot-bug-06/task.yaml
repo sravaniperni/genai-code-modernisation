@@ -1,0 +1,21 @@
+id: releasebot-bug-06
+repo: releasebot
+category: bug_fix
+split: heldout
+title: Release listing stops after the first page on our Gitea instance
+request: |
+  Our self-hosted Gitea limits API pages to 50 items, no matter what `per_page` the client asks for.
+  releasebot is configured with `hosting.per_page: 100`, and `HostingClient.list_releases()` returns
+  exactly 50 releases although the repository has 130 (the response carries a `Link: <...>; rel="next"`
+  header pointing at page 2, which is never requested).
+
+  Listing must return every item of the collection by following the `rel="next"` links until there is
+  none, even when the server returns fewer items per page than requested. It should not make extra
+  requests once there is no next link, and errors on any page must still be raised as `HostingError`.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay adds a "short page means last page" shortcut to hosting.HostingClient._paginate,
+  which stops after the first page whenever the server caps the page size below per_page. The visible
+  test uses full pages until the last one, so it still passes. Acceptance uses a fake server that caps
+  page sizes and checks complete listings, request counts, stopping without a next link, configuration
+  of per_page and error propagation from later pages.

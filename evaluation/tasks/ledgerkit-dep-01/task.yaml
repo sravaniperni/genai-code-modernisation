@@ -1,0 +1,28 @@
+id: ledgerkit-dep-01
+repo: ledgerkit
+category: dependency_upgrade
+split: dev
+title: Upgrade click to 8.1.8
+request: |
+  Please upgrade click from 7.1.2 to 8.1.8 and pin it exactly (`click==8.1.8`) in requirements.txt.
+
+  Click 7 has been unmaintained for years and our deployment image now ships Click 8.1; tools that
+  embed `ledgerkit.cli.cli` in their own Click 8.1 command groups currently fail as soon as they import
+  our CLI module, and installed shell completion for `ledgerkit` does not work with Click 8.
+
+  After the upgrade every command must behave exactly as it does today:
+
+  * `balance`, `trial-balance` and `import-csv` produce the same output and the same error messages
+    (e.g. `Error: no account with code '9999'`);
+  * `--format table|json|csv` renders tables the same way, and table output is still cut to the
+    terminal width (honouring the `COLUMNS` environment variable when there is no terminal);
+  * shell completion of the `ACCOUNT` argument of `ledgerkit balance` keeps offering the account codes
+    of the ledger given with `--ledger`, with each account's name as the completion help text, and
+    offers nothing (rather than crashing) when no usable ledger is given.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Click 8.1 removed Group.resultcallback (now result_callback), the Parameter `autocompletion=` argument
+  (now `shell_complete=` with a (ctx, param, incomplete) signature returning CompletionItem objects) and
+  click.get_terminal_size (use shutil.get_terminal_size). With the bumped pin the CLI module fails to import.
+  Acceptance checks the installed version, command output/format rendering, terminal-width truncation via
+  COLUMNS, and completions through Click 8's public click.shell_completion.ShellComplete API.

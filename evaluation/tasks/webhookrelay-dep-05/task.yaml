@@ -1,0 +1,23 @@
+id: webhookrelay-dep-05
+repo: webhookrelay
+category: dependency_upgrade
+split: heldout
+title: Upgrade httpx to 0.28.1
+request: |
+  Please upgrade httpx from 0.23.3 to 0.28.1 and pin it exactly in requirements.txt. The shared internal
+  client library we are adopting next sprint requires httpx>=0.28, and 0.23 pulls in an old httpcore/h11
+  pair that our scanner keeps flagging.
+
+  httpx is used in three places and all of them must keep working:
+  - the default delivery transport, including deployments that send deliveries through the outbound proxy
+    configured with the top-level `proxy` setting;
+  - BatchSender, which does concurrent backfills (also optionally through a proxy);
+  - archive replay (`webhookrelay.replay.replay`), which posts archived requests into a relay WSGI app
+    in-process, without opening sockets.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  httpx 0.28 removed the `proxies=` argument (deprecated in 0.26; use `proxy=` or `mounts=`) from Client and
+  AsyncClient, and the `app=` shortcut (deprecated in 0.27; use transport=httpx.WSGITransport(app=...)).
+  Both raise TypeError, so every transport/batch/replay construction fails with only the pin bumped.
+  Acceptance checks the version, delivery via MockTransport, that a configured proxy is mounted for
+  outbound URLs, batch sends (with and without a proxy configured), and replay into a Flask app.

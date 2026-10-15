@@ -1,0 +1,100 @@
+# Development stack: PostgreSQL, migrations, API, worker and the dashboard (http://127.0.0.1:8080).
+#
+#   cp .env.example .env            # then edit model / GitHub settings
+#   docker compose up --build
+#
+# If Docker Hub rate-limits anonymous pulls:  BASE_REGISTRY=mirror.gcr.io/library docker compose up --build
+#
+# Security notes (details in docs/SECURITY.md):
+# - No container is privileged and the Docker socket is never mounted.
+# - The worker runs untrusted repository code inside bubblewrap. Creating those namespaces inside a container
+#   requires relaxing the container's seccomp/AppArmor profiles and /proc masking for the *worker only*.
+#   The sandboxed processes still run as an unprivileged uid with no capabilities, no network and no host
+#   paths. cgroup per-job limits are unavailable inside the container; per-job process limits fall back to
+#   RLIMIT_NPROC. For untrusted third-party repositories run workers on dedicated hosts or microVMs.
+
+x-backend: &backend
+  build:
+    context: ./backend
+    args:
+      BASE_REGISTRY: ${BASE_REGISTRY:-docker.io/library}
+  image: modernisation-backend:dev
+  env_file:
+    - path: .env
+      required: false
+  environment: &backend-env
+    MODERNISATION_DATABASE_URL: postgresql+psycopg://modernisation:${POSTGRES_PASSWORD:-modernisation-dev}@postgres:5432/modernisation
+    MODERNISATION_DATA_DIR: /data
+    MODERNISATION_ALLOWED_LOCAL_ROOTS: '["/repositories"]'
+    MODERNISATION_WHEELHOUSE_DIR: /wheelhouse
+  volumes:
+    - platform-data:/data
+    - ${LOCAL_REPOSITORIES:-./.data/repositories}:/repositories:ro
+    - ${WHEELHOUSE:-./.data/wheelhouse}:/wheelhouse:ro
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  postgres:
+    image: ${BASE_REGISTRY:-docker.io/library}/postgres:16-alpine
+    environment:
+      POSTGRES_USER: modernisation
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-modernisation-dev}
+      POSTGRES_DB: modernisation
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U modernisation -d modernisation"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+
+  migrate:
+    <<: *backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
+  api:
+    <<: *backend
+    command: ["python", "-m", "modernisation.cli", "api", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  worker:
+    <<: *backend
+    user: root
+    command: ["python", "-m", "modernisation.cli", "worker"]
+    security_opt:
+      - seccomp=unconfined       # allow unshare(CLONE_NEWUSER) for bubblewrap
+      - apparmor=unconfined
+      - systempaths=unconfined   # allow bubblewrap to mount a fresh /proc in its PID namespace
+    # Model servers on the host (e.g. scripts/local_model_server.sh) are reachable at host.docker.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BASE_REGISTRY: ${BASE_REGISTRY:-docker.io/library}
+    image: modernisation-frontend:dev
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  platform-data:

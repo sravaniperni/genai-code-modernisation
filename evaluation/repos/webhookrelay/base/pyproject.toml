@@ -1,0 +1,11 @@
+[project]
+name = "webhookrelay"
+version = "1.4.0"
+description = "Receive, verify, normalise, route and deliver webhooks"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+# Runtime dependencies are pinned exactly in requirements.txt (deployed with pip install -r).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

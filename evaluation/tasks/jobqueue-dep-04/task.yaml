@@ -1,0 +1,24 @@
+id: jobqueue-dep-04
+repo: jobqueue
+category: dependency_upgrade
+split: heldout
+title: Upgrade marshmallow to 4.0.1
+request: |
+  The reporting service that imports our job exports has upgraded to marshmallow 4 and cannot share an
+  environment with our `marshmallow==3.19.0` pin. Upgrade marshmallow from 3.19.0 to 4.0.1 and pin it exactly
+  in requirements.txt (`marshmallow==4.0.1`).
+
+  The export format and its behaviour must not change: `dump_jobs()` writes the versioned
+  `{"version": 1, "jobs": [...]}` document with UTC ISO-8601 timestamps and can mask payload values
+  (`redact_payload=True`, also used by `jobqueue export --redact`); `load_jobs()` accepts that document or a
+  bare list of records, fills in defaults, reads naive timestamps as UTC, and reports problems (blank handler
+  names, bad timestamps, invalid states, unsupported export versions, malformed JSON) as
+  `SerializationError` with per-field messages.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Substituted for the suggested marshmallow 2.21.0 -> 3.x upgrade: marshmallow 2.x imports distutils and
+  cannot be imported on Python 3.12. marshmallow 4 removed the Schema context (TypeError on
+  context=...), renamed pass_many to pass_collection (TypeError when the schema class is defined), passes a
+  data_key keyword to @validates methods, and removed marshmallow.utils.isoformat/from_iso_datetime. The
+  baseline serialization.py uses all four. Acceptance checks the version, dump/load round trips, redaction
+  (library and CLI), envelope handling and every error path.

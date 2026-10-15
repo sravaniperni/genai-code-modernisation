@@ -1,0 +1,21 @@
+id: jobqueue-dep-08
+repo: jobqueue
+category: dependency_upgrade
+split: heldout
+title: Upgrade importlib-metadata to 7.2.1
+request: |
+  Our pin `importlib-metadata==4.13.0` conflicts with the packaging tooling the release pipeline now uses,
+  which needs a 7.x release. Upgrade importlib-metadata from 4.13.0 to 7.2.1 and pin it exactly in
+  requirements.txt (`importlib-metadata==7.2.1`).
+
+  Handler plugin discovery must keep working: `HandlerRegistry.discover()` registers every handler that
+  installed distributions advertise in the `jobqueue.handlers` entry-point group (or the group passed in),
+  picks up a handler's `payload_schema`, records the origin as `plugin:<distribution>==<version>`, lets
+  locally registered handlers win over plugins of the same name, and returns the sorted names it added
+  (an empty list when nothing is advertised).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  importlib-metadata 5.0 removed the dict-style SelectableGroups returned by entry_points(); the baseline
+  calls entry_points().get(group, ()), which raises AttributeError on 7.x. Tests create throw-away
+  *.dist-info directories on sys.path, so no package installation is needed. Acceptance checks the version,
+  discovery from two distributions, custom groups, precedence, schema/origin metadata and an end-to-end run.

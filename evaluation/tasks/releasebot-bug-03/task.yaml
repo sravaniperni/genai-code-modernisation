@@ -1,0 +1,20 @@
+id: releasebot-bug-03
+repo: releasebot
+category: bug_fix
+split: heldout
+title: Changelog sections appear in random order
+request: |
+  The order of the sections in our CHANGELOG changes from release to release. For 1.5.0 the entry started
+  with "### Bug Fixes" and only then listed "### Features"; for 1.4.0 it was the other way round. As far
+  as we can tell the section order depends on which kind of commit happened to be the most recent one.
+
+  Sections must always appear in the order in which they are configured under `changelog.sections`
+  (Features, Bug Fixes, Performance Improvements, Reverts by default), regardless of the order of the
+  commits, for both the changelog entry and the release notes. Inside a section, commits keep the order
+  of the log (newest first), and sections without commits are omitted as before.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay rewrites changelog.group_commits to create sections in order of first appearance in
+  the (newest-first) log instead of configuration order. Visible tests use logs whose first commit is a
+  feature, so they still pass. Acceptance checks default and custom orders, per-section commit order,
+  omission of empty sections and the rendered changelog/notes.

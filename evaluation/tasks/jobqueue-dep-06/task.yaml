@@ -1,0 +1,23 @@
+id: jobqueue-dep-06
+repo: jobqueue
+category: dependency_upgrade
+split: heldout
+title: Upgrade urllib3 to 2.2.3
+request: |
+  urllib3 1.26 only receives security backports now and our dependency audit asks every service to move to
+  the 2.x line. Upgrade urllib3 from 1.26.20 to 2.2.3 and pin it exactly in requirements.txt
+  (`urllib3==2.2.3`).
+
+  Completion webhooks must behave exactly as before: `WebhookNotifier` posts signed JSON events only for
+  subscribed states, returns the delivery status and the receiver's `X-Delivery-Id`, raises `WebhookError`
+  (with `status` and a `retry_after` hint taken from `Retry-After`, capped at urllib3's maximum backoff) for
+  error responses and for transport failures, and lets urllib3 retry POST requests on 429/5xx responses with
+  exponential backoff while keeping urllib3's default retryable methods. Header lookups on responses must
+  stay case-insensitive.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  urllib3 2 removed Retry(method_whitelist=...), Retry.DEFAULT_METHOD_WHITELIST and Retry.BACKOFF_MAX (all used
+  by the baseline webhooks.py); HTTPResponse.getheaders() still exists in 2.2.3 but is deprecated. Tests use a
+  fake PoolManager that returns real urllib3 HTTPResponse objects, so no network is used. Acceptance checks
+  the version, the Retry configuration, deliveries, Retry-After handling and its cap, transport errors, header
+  case-insensitivity and the executor integration.

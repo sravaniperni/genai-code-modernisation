@@ -1,0 +1,21 @@
+id: releasebot-bug-04
+repo: releasebot
+category: bug_fix
+split: heldout
+title: Tags of other monorepo components are taken as releases
+request: |
+  We release two components from one repository and use per-component tag prefixes: the API uses
+  `tag_prefix: api/v` (tags like `api/v1.3.0`) and the web app uses `web/v` (tags like `web/v3.0.0`).
+
+  When planning the next API release, releasebot reports `3.0.0` as the latest API release and then fails
+  because it searches the commit log for the commit of `web/v3.0.0`. Similarly, with the default prefix
+  `v`, a stray tag such as `x1.2.3` is picked up as version 1.2.3.
+
+  Only tags that actually start with the configured prefix may be considered release tags; the version is
+  what follows the prefix. An empty prefix means tags are plain versions (`1.2.3`).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  The setup overlay removes the startswith() check from tags.version_from_tag and just slices off
+  len(prefix) characters, so any tag whose tail is a valid version (web/v3.0.0 for prefix api/v, x1.2.3
+  for prefix v) is accepted. Visible tests only use tags whose remainder is not a valid version.
+  Acceptance checks prefix matching, per-component latest release and release planning.

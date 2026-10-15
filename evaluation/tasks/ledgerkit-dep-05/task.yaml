@@ -1,0 +1,26 @@
+id: ledgerkit-dep-05
+repo: ledgerkit
+category: dependency_upgrade
+split: heldout
+title: Upgrade marshmallow to 4.0.1
+request: |
+  Please upgrade marshmallow from 3.26.1 to 4.0.1 and pin it exactly (`marshmallow==4.0.1`) in
+  requirements.txt. Our web stack (webargs/apispec) has moved to marshmallow 4, and with 3.26 the ledger
+  document code already emits a stream of `RemovedInMarshmallow4Warning`s.
+
+  The JSON ledger document format handled by `ledgerkit.formats` must not change in any way:
+
+  * `dump_ledger()` output stays identical (key names such as `formatVersion`, `lockedThrough`,
+    `accountCode`, `createdAt`, defaults, amounts as strings, `meta` passed through unchanged);
+  * `load_ledger()` keeps applying the document's `currency` to postings that don't name one (default
+    USD), ignores unknown keys at every level, returns the free-form `meta` mapping (empty when absent),
+    and turns every validation problem into a `FormatError` whose message lists `"<field path>: <message>"`
+    items — e.g. unknown posting currencies and unsupported `formatVersion` values;
+  * documents loaded one after another must not influence each other's defaults.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  marshmallow 4 removed the missing=/default= field arguments and arbitrary metadata kwargs (TypeError at
+  import), the Schema(context=...) argument and self.context, pass_many on hooks, and now passes data_key
+  to @validates methods; fields.Field should be fields.Raw. Acceptance checks the installed version, exact
+  dump output, defaults/unknown-key handling, document-currency defaults (also across consecutive loads),
+  meta round trips and error reporting.

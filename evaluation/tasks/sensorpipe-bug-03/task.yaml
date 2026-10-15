@@ -1,0 +1,23 @@
+id: sensorpipe-bug-03
+repo: sensorpipe
+category: bug_fix
+split: heldout
+title: Z-score detection stops working when a batch contains a dropout
+request: |
+  The z-score anomaly detector silently stops flagging anything as soon as a batch contains a single dropout
+  (a NaN reading, e.g. an empty value in the CSV or a gap produced by resampling).
+
+  Example: 18 readings of 10.0, one dropout, then a spike of 30.0.
+  `zscore_anomalies(values, threshold=3.0)` returns an empty list and `zscores(values)` is NaN for every
+  element. Remove the dropout and the spike at the end is flagged as expected. The same happens through
+  `ZScoreDetector` and the pipeline's `detect` stage, so real excursions were missed after every comms
+  hiccup.
+
+  Expected: dropouts are ignored when the mean and standard deviation are computed, they are never reported as
+  anomalies themselves and keep a NaN score, and every other reading gets the same score as if the dropouts were
+  not there.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Setup replaces the NaN-aware zscores() with a version that computes mean/std over all values, so one NaN makes
+  every score NaN and nothing is flagged. Visible tests have no NaN in z-score inputs. Acceptance reproduces the
+  report, compares scores with the NaN-free series and runs the detector through a resampled pipeline batch.

@@ -1,0 +1,24 @@
+[project]
+name = "ledgerkit"
+version = "0.9.0"
+description = "Double-entry bookkeeping primitives: accounts, journals, periods, reports and interchange formats."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+ledgerkit = "ledgerkit.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"ledgerkit.charts" = ["*.json", "*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

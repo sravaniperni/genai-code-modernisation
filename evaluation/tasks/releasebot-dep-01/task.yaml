@@ -1,0 +1,21 @@
+id: releasebot-dep-01
+repo: releasebot
+category: dependency_upgrade
+split: dev
+title: Upgrade click to 8.1.8
+request: |
+  Our internal Python platform image now ships click 8.1.8 and every tool in the monorepo has to run on
+  it; releasebot still pins click 7.1.2, which is also end-of-life. Please upgrade click from 7.1.2 to
+  8.1.8 and pin it exactly in requirements.txt (`click==8.1.8`).
+
+  The whole `releasebot` command line has to keep working after the upgrade, including:
+  - the global `--json` flag, which prints each command's result as JSON,
+  - shell completion of publisher names for `releasebot publish --publisher <TAB>`,
+  - `releasebot publishers`, whose output is cut to the width of the terminal (it honours `COLUMNS`).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  click 8.1 removed `click.get_terminal_size` (used by `publishers`), the `autocompletion=` parameter
+  (now `shell_complete=` with a (ctx, param, incomplete) signature) and `Group.resultcallback`
+  (now `result_callback`). The last two break at import time of releasebot.cli. Acceptance checks the
+  pinned version, help output, JSON output via the result callback, bash completion through click 8's
+  completion protocol, width truncation with COLUMNS, and error reporting.

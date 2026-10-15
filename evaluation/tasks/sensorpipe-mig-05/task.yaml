@@ -1,0 +1,25 @@
+id: sensorpipe-mig-05
+repo: sensorpipe
+category: deprecated_api_migration
+split: heldout
+title: Move bundled calibration tables to importlib.resources.files()
+request: |
+  Loading one of the bundled reference calibration tables emits, on Python 3.12,
+
+      DeprecationWarning: is_resource is deprecated. Use files() instead. Refer to
+      https://importlib-resources.readthedocs.io/en/latest/using.html#migrating-from-legacy for migration advice.
+
+  followed by the same warning for `open_text`, and listing the bundled tables triggers it for `contents`. Our CI
+  treats DeprecationWarnings as errors. Please move bundled-table access to the `importlib.resources.files()` API.
+
+  Nothing visible may change: the table names returned by `list_bundled_tables()` (sorted, without extension), the
+  curves and units loaded by `load_bundled_table()`, and the CalibrationError raised for a table that does not
+  exist.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  calibration.list_bundled_tables/load_bundled_table use importlib.resources.contents/is_resource/open_text,
+  deprecated (DeprecationWarning) on Python 3.11/3.12. Acceptance loads every table with warnings as errors
+  (the table path validates format versions via semver isvalid/parse, which do not warn) and checks the legacy
+  functions are no longer referenced in src/.

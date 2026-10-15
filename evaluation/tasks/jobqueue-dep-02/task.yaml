@@ -1,0 +1,22 @@
+id: jobqueue-dep-02
+repo: jobqueue
+category: dependency_upgrade
+split: dev
+title: Upgrade PyJWT to 2.9.0
+request: |
+  Security scanning flags our PyJWT 1.7.1 pin (it is end-of-life and no longer receives fixes), and the
+  identity gateway that consumes our job tokens now requires clients built against PyJWT 2. Upgrade PyJWT
+  from 1.7.1 to 2.9.0 and pin it exactly in requirements.txt (`PyJWT==2.9.0`).
+
+  Job tokens must behave as before after the upgrade: `TokenSigner.issue()` returns the token as text,
+  `verify()` checks signature, issuer and expiry, enforces the requested scope, raises `TokenExpired` for
+  expired tokens and `TokenError` for anything else that is wrong (including tokens that lack the
+  mandatory `exp` or `iat` claims), and `TokenSigner.peek()` still returns the claims of any well-formed token
+  without verifying it, even when it is expired or signed with another key.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  PyJWT 2 returns str from jwt.encode (the baseline calls .decode on the result), removed the
+  jwt.ExpiredSignature alias, ignores the 1.x options require_exp/require_iat (replaced by
+  options={"require": [...]}) and no longer accepts verify=False (signature checking must be disabled through
+  options and algorithms become mandatory otherwise). Acceptance covers each of these paths: issue/verify,
+  expiry, tokens without exp/iat crafted with the same key, peek on foreign and expired tokens.

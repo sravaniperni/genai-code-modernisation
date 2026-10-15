@@ -1,0 +1,16 @@
+{% if breaking %}
+### ⚠ BREAKING CHANGES
+
+{% for commit in breaking %}
+* {% if commit.scope %}**{{ commit.scope | scope_label }}:** {% endif %}{{ commit.breaking_description }}
+{% endfor %}
+
+{% endif %}
+{% for section in sections %}
+### {{ section.title }}
+
+{% for commit in section.commits %}
+* {% if commit.scope %}**{{ commit.scope | scope_label }}:** {% endif %}{{ commit.description }} ({{ commit.sha | commit_link }}){{ (" (closes #" ~ (commit.references | join(", #")) ~ ")") if commit.references else "" }}
+{% endfor %}
+
+{% endfor %}

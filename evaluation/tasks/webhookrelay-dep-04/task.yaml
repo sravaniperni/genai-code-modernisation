@@ -1,0 +1,24 @@
+id: webhookrelay-dep-04
+repo: webhookrelay
+category: dependency_upgrade
+split: heldout
+title: Upgrade urllib3 to 2.5.0
+request: |
+  urllib3 1.26.x only receives security fixes on a best-effort basis and our scanner reports
+  CVE-2025-50181 against 1.26.20 (fixed in 2.5.0). Please upgrade urllib3 from 1.26.20 to 2.5.0 and pin it
+  exactly (urllib3==2.5.0) in requirements.txt.
+
+  urllib3 backs the pooled transport used by `transport: pool` targets. Its behaviour must not change: the
+  pool retries transient failures itself, including for POST deliveries (they carry a delivery id, so they
+  are safe to repeat), on 429/502/503/504 responses, with exponential backoff capped at 30 seconds, and it
+  returns the final response instead of raising when the status retries run out. Connection failures must
+  still surface as TransportError, and responses must still be normalised the same way (status, lower-cased
+  header names, decoded body).
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  urllib3 2.0 removed Retry(method_whitelist=...) and Retry.DEFAULT_METHOD_WHITELIST (TypeError /
+  AttributeError when the pooled transport is built). It also silently stopped honouring a subclass's
+  DEFAULT_BACKOFF_MAX: the cap now comes from the backoff_max argument, whose default (120s) is bound at
+  definition time, so PoolRetry's 30s cap is lost unless backoff_max is passed. Acceptance checks the
+  version, transport construction and normalisation through a fake pool, the retry object handed to the
+  pool (methods, statuses, totals, raise_on_status) and the 30s cap, plus error wrapping.

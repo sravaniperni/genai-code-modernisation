@@ -1,0 +1,27 @@
+id: ledgerkit-dep-04
+repo: ledgerkit
+category: dependency_upgrade
+split: heldout
+title: Upgrade SQLAlchemy to 2.0.41
+request: |
+  SQLAlchemy 1.4 only receives critical fixes now, and the reporting service that shares our
+  persistence layer has already moved to 2.0. Please upgrade SQLAlchemy from 1.4.54 to 2.0.41 and pin
+  it exactly (`SQLAlchemy==2.0.41`) in requirements.txt.
+
+  `ledgerkit.store.LedgerStore` must keep its current behaviour on 2.0, both for the default in-memory
+  database and for file-based SQLite URLs:
+
+  * `save_chart()` inserts new accounts and updates existing ones; `load_chart()` returns them;
+  * `save_entry()` / `load_entries(start=...)` / `load_ledger()` round-trip entries exactly (amounts in
+    every currency, references, timestamps, posting order);
+  * `account_totals(as_of=...)` aggregates debits and credits per account in SQL;
+  * `delete_entry()` removes an entry with its postings, reports whether anything was deleted, and the
+    deletion is durable — another `LedgerStore` opened on the same database file must no longer see it;
+  * `count_entries()` returns the number of stored entries.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  SQLAlchemy 2.0 removed Engine.execute, list-style select([...]) and case([...]), string-keyed Row
+  access, keyword bind parameters for Connection.execute, plain-string SQL execution and library-level
+  autocommit (deletes done on engine.connect() without commit are rolled back). Acceptance checks the
+  installed version and every LedgerStore method, including durability of deletes across instances on a
+  file database.

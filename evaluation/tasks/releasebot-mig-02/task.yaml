@@ -1,0 +1,24 @@
+id: releasebot-mig-02
+repo: releasebot
+category: deprecated_api_migration
+split: heldout
+title: Stop using the deprecated pipes module
+request: |
+  Importing releasebot's hook support on Python 3.12 prints
+
+      DeprecationWarning: 'pipes' is deprecated and slated for removal in Python 3.13
+
+  and with our warnings-as-errors CI setting the `hooks` publisher cannot even be imported. The `pipes`
+  module is gone in Python 3.13, so we need to get rid of it now.
+
+  Hook commands must stay exactly as safe as they are today: every value substituted into a hook command
+  line is quoted with POSIX shell rules (the empty string becomes `''`, plain words stay unquoted, quotes
+  and shell metacharacters can never break out), and `{{`/`}}` still produce literal braces.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay makes releasebot.hooks import pipes and use pipes.quote (deprecated since 3.11,
+  removed in 3.13); the import itself warns, so under -W error::DeprecationWarning the acceptance
+  module fails to import. The fix is shlex.quote. Acceptance checks quoting, rendering, a round trip
+  through /bin/sh with hostile input, the hooks publisher, and that pipes is no longer imported.

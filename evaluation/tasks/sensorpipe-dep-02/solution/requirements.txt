@@ -1,0 +1,9 @@
+numpy==1.26.4
+packaging==24.2
+ruamel.yaml==0.17.40
+arrow==0.17.0
+pydantic==1.10.21
+click==7.1.2
+semver==2.13.0
+importlib-metadata==4.13.0
+tzdata==2025.2

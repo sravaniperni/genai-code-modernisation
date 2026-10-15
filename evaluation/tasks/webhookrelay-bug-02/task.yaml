@@ -1,0 +1,24 @@
+id: webhookrelay-bug-02
+repo: webhookrelay
+category: bug_fix
+split: heldout
+title: Retry backoff waits twice as long as configured
+request: |
+  Retries happen later than our configuration says. With
+
+    retry: {base_delay: 2, factor: 2, max_delay: 300}
+
+  a target that answers 503 to a delivery made at 2026-01-01T12:00:00Z gets a delivery record with
+  `next_retry_at: 2026-01-01T12:00:04Z`, and when that retry fails too the next one is scheduled 8 seconds
+  later, then 16... According to the RetryPolicy documentation and our runbook the waits should be
+  base_delay, base_delay*factor, base_delay*factor^2, ... i.e. 2s, 4s, 8s for this configuration, never
+  exceeding max_delay. With base_delay 60 and factor 3 we see 180s before the first retry instead of 60s.
+
+  Please fix the backoff so retries are scheduled as documented. The number of attempts, which statuses are
+  retried, and the handling of Retry-After headers sent by targets must not change.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  Injected defect (scheduler.py): RetryPolicy.delay_for uses factor ** attempt instead of
+  factor ** (attempt - 1). Visible tests only check that delays grow and are capped. Acceptance checks
+  delay_for sequences and the cap, next_retry_at for consecutive failed attempts through the Dispatcher,
+  that the attempt limit and retryable statuses are unchanged, and that Retry-After still takes precedence.

@@ -1,0 +1,14 @@
+{
+  "taskset_version": "29159cc0f4ce5d5a",
+  "tasks": 100,
+  "by_category": {
+    "bug_fix": 30,
+    "dependency_upgrade": 40,
+    "deprecated_api_migration": 30
+  },
+  "by_split": {
+    "dev": 20,
+    "heldout": 80
+  },
+  "frozen_at": "2026-10-15T18:10:23.547981+00:00"
+}

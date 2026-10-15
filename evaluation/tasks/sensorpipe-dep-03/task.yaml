@@ -1,0 +1,20 @@
+id: sensorpipe-dep-03
+repo: sensorpipe
+category: dependency_upgrade
+split: heldout
+title: Upgrade ruamel.yaml to 0.18.10
+request: |
+  Upgrade ruamel.yaml from 0.17.40 to 0.18.10 and pin it exactly in requirements.txt.
+
+  We are consolidating YAML tooling across the plant gateways on ruamel.yaml 0.18.10; the 0.17 line no longer
+  receives fixes and the gateway image already carries 0.18.
+
+  Pipeline configuration handling must behave as before: loading and validating pipeline YAML files (invalid
+  YAML still raises ConfigError), dumping a configuration back to YAML, and editing a configuration file in
+  place, which must keep the operators' header comment and the existing key order and must leave the file
+  untouched when the change would make the configuration invalid.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  config.py uses ruamel.yaml.safe_load, round_trip_load and round_trip_dump; ruamel.yaml 0.18 removed these
+  module-level functions (AttributeError). Acceptance checks the installed version and load/dump/update
+  behaviour semantically (comments and key order preserved, invalid update rejected without touching the file).

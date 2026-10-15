@@ -1,0 +1,23 @@
+id: webhookrelay-dep-08
+repo: webhookrelay
+category: dependency_upgrade
+split: heldout
+title: Upgrade importlib-metadata to 7.2.1
+request: |
+  A package that is installed next to the relay in our production image now requires
+  importlib-metadata>=6, so our pin on 4.13.0 makes the image build fail. Please upgrade importlib-metadata
+  from 4.13.0 to 7.2.1 and pin it exactly (importlib-metadata==7.2.1) in requirements.txt.
+
+  importlib-metadata is how third-party plugins are found: distributions advertise plugins in the
+  `webhookrelay.plugins` entry-point group. All of the plugin registry's behaviour must be preserved:
+  discovering every advertised plugin or only the enabled ones (registered in entry-point name order),
+  loading a single plugin by name, reporting each plugin's origin as "<distribution name> <version>" on the
+  status page, and the existing PluginError messages for missing or broken plugins. Plugins listed under
+  `plugins` in the relay configuration must still be enabled when the app starts.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  importlib-metadata 5.0 removed the dict-like SelectableGroups returned by entry_points() (so
+  entry_points().get(group, []) raises AttributeError) and the deprecated positional indexing of
+  EntryPoints (matches[0] now means "the entry point named 0" and raises KeyError). Acceptance builds fake
+  distributions (dist-info directories with entry_points.txt) on sys.path and checks discovery, enabled
+  filtering, ordering, single-plugin loading, origins, error messages and the app/status integration.

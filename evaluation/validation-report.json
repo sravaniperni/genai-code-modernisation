@@ -1,0 +1,1984 @@
+{
+  "taskset_version": "29159cc0f4ce5d5a",
+  "tasks": 100,
+  "valid": 100,
+  "by_category": {
+    "bug_fix": 30,
+    "dependency_upgrade": 40,
+    "deprecated_api_migration": 30
+  },
+  "by_split": {
+    "dev": 20,
+    "heldout": 80
+  },
+  "environment": {
+    "python": "3.12 (sandbox /usr/bin/python3.12)",
+    "wheelhouse_wheels": 90,
+    "wheelhouse_listing_sha256": "968959ca1e377d2a4ac65d9b1aabc50e614457d4605cda39c206f7a1fb8e3689",
+    "wheelhouse_source": "scripts/build_wheelhouse.sh (pinned lists only, --no-deps)"
+  },
+  "results": [
+    {
+      "id": "jobqueue-bug-01",
+      "repo": "jobqueue",
+      "category": "bug_fix",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 6,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/sqlstore.py"
+      ]
+    },
+    {
+      "id": "jobqueue-bug-02",
+      "repo": "jobqueue",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 9,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 7,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/retry.py"
+      ]
+    },
+    {
+      "id": "jobqueue-bug-03",
+      "repo": "jobqueue",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 17,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 17,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/cron.py"
+      ]
+    },
+    {
+      "id": "jobqueue-bug-04",
+      "repo": "jobqueue",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 3,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/executor.py"
+      ]
+    },
+    {
+      "id": "jobqueue-bug-05",
+      "repo": "jobqueue",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/cron.py"
+      ]
+    },
+    {
+      "id": "jobqueue-bug-06",
+      "repo": "jobqueue",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 10,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 9,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/payload.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-01",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 8,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/sqlstore.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-02",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/tokens.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-03",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 9,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/spec.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-04",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/serialization.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-05",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/cron.py",
+        "src/jobqueue/scheduler.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-06",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 12,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/webhooks.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-07",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/cli.py"
+      ]
+    },
+    {
+      "id": "jobqueue-dep-08",
+      "repo": "jobqueue",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/jobqueue/registry.py"
+      ]
+    },
+    {
+      "id": "jobqueue-mig-01",
+      "repo": "jobqueue",
+      "category": "deprecated_api_migration",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/workers.py"
+      ]
+    },
+    {
+      "id": "jobqueue-mig-02",
+      "repo": "jobqueue",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/workers.py"
+      ]
+    },
+    {
+      "id": "jobqueue-mig-03",
+      "repo": "jobqueue",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/aio.py"
+      ]
+    },
+    {
+      "id": "jobqueue-mig-04",
+      "repo": "jobqueue",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/clock.py"
+      ]
+    },
+    {
+      "id": "jobqueue-mig-05",
+      "repo": "jobqueue",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/history.py"
+      ]
+    },
+    {
+      "id": "jobqueue-mig-06",
+      "repo": "jobqueue",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 67,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/jobqueue/executor.py",
+        "src/jobqueue/workers.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-bug-01",
+      "repo": "ledgerkit",
+      "category": "bug_fix",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 12,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 8,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/money.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-bug-02",
+      "repo": "ledgerkit",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/periods.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-bug-03",
+      "repo": "ledgerkit",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 3,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/journal.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-bug-04",
+      "repo": "ledgerkit",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/rates.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-bug-05",
+      "repo": "ledgerkit",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 8,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 7,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/journal.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-bug-06",
+      "repo": "ledgerkit",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 16,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 10,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/money.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-01",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 8,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/cli.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-02",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/signing.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-03",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 4,
+        "kind": "collection_error",
+        "failures": null,
+        "errors": null
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/schemas.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-04",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/store.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-05",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/formats.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-06",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/periods.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-07",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 15,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/versioning.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-dep-08",
+      "repo": "ledgerkit",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 20,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/ledgerkit/versioning.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-mig-01",
+      "repo": "ledgerkit",
+      "category": "deprecated_api_migration",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 7,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/journal.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-mig-02",
+      "repo": "ledgerkit",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/audit.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-mig-03",
+      "repo": "ledgerkit",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 12,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 12,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/templates.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-mig-04",
+      "repo": "ledgerkit",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/rates.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-mig-05",
+      "repo": "ledgerkit",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/importers.py",
+        "src/ledgerkit/rates.py"
+      ]
+    },
+    {
+      "id": "ledgerkit-mig-06",
+      "repo": "ledgerkit",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/ledgerkit/backup.py"
+      ]
+    },
+    {
+      "id": "releasebot-bug-01",
+      "repo": "releasebot",
+      "category": "bug_fix",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 6,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/versioning.py"
+      ]
+    },
+    {
+      "id": "releasebot-bug-02",
+      "repo": "releasebot",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/commits.py"
+      ]
+    },
+    {
+      "id": "releasebot-bug-03",
+      "repo": "releasebot",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/changelog.py"
+      ]
+    },
+    {
+      "id": "releasebot-bug-04",
+      "repo": "releasebot",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 3,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/tags.py"
+      ]
+    },
+    {
+      "id": "releasebot-bug-05",
+      "repo": "releasebot",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/bumping.py"
+      ]
+    },
+    {
+      "id": "releasebot-bug-06",
+      "repo": "releasebot",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/hosting.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-01",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/cli.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-02",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/config.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-03",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/notes.py",
+        "src/releasebot/templating.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-04",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/notes.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-05",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/plugins.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-06",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/hosting.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-07",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/pep440.py"
+      ]
+    },
+    {
+      "id": "releasebot-dep-08",
+      "repo": "releasebot",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/releasebot/versioning.py"
+      ]
+    },
+    {
+      "id": "releasebot-mig-01",
+      "repo": "releasebot",
+      "category": "deprecated_api_migration",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/commits.py",
+        "src/releasebot/release.py",
+        "src/releasebot/tags.py"
+      ]
+    },
+    {
+      "id": "releasebot-mig-02",
+      "repo": "releasebot",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 2,
+        "kind": "collection_error",
+        "failures": 0,
+        "errors": 1
+      },
+      "solution_files": [
+        "src/releasebot/hooks.py"
+      ]
+    },
+    {
+      "id": "releasebot-mig-03",
+      "repo": "releasebot",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/dates.py"
+      ]
+    },
+    {
+      "id": "releasebot-mig-04",
+      "repo": "releasebot",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/plugins.py"
+      ]
+    },
+    {
+      "id": "releasebot-mig-05",
+      "repo": "releasebot",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/templating.py"
+      ]
+    },
+    {
+      "id": "releasebot-mig-06",
+      "repo": "releasebot",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 68,
+      "acceptance_tests": 10,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 3,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/releasebot/staging.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-bug-01",
+      "repo": "sensorpipe",
+      "category": "bug_fix",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/resample.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-bug-02",
+      "repo": "sensorpipe",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 15,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 13,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/units.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-bug-03",
+      "repo": "sensorpipe",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/anomaly.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-bug-04",
+      "repo": "sensorpipe",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 6,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/calibration.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-bug-05",
+      "repo": "sensorpipe",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 10,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/timeutil.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-bug-06",
+      "repo": "sensorpipe",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/devices.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-01",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/anomaly.py",
+        "src/sensorpipe/calibration.py",
+        "src/sensorpipe/readings.py",
+        "src/sensorpipe/resample.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-02",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/devices.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-03",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/config.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-04",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/report.py",
+        "src/sensorpipe/timeutil.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-05",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 15,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/config.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-06",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/cli.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-07",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 19,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "pyproject.toml",
+        "requirements.txt",
+        "src/sensorpipe/calibration.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-dep-08",
+      "repo": "sensorpipe",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/sensorpipe/plugins.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-mig-01",
+      "repo": "sensorpipe",
+      "category": "deprecated_api_migration",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 9,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 9,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/readings.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-mig-02",
+      "repo": "sensorpipe",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/calibration.py",
+        "src/sensorpipe/resample.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-mig-03",
+      "repo": "sensorpipe",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 9,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/archive.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-mig-04",
+      "repo": "sensorpipe",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/uplink.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-mig-05",
+      "repo": "sensorpipe",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 15,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 15,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/calibration.py"
+      ]
+    },
+    {
+      "id": "sensorpipe-mig-06",
+      "repo": "sensorpipe",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 65,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 6,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/sensorpipe/buffer.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-bug-01",
+      "repo": "webhookrelay",
+      "category": "bug_fix",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 8,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 6,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/app.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-bug-02",
+      "repo": "webhookrelay",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/scheduler.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-bug-03",
+      "repo": "webhookrelay",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 8,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 8,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/payloads.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-bug-04",
+      "repo": "webhookrelay",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/routing.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-bug-05",
+      "repo": "webhookrelay",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 14,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 6,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/delivery.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-bug-06",
+      "repo": "webhookrelay",
+      "category": "bug_fix",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 9,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/scheduler.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-01",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 12,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 2,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/signatures.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-02",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/templating.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-03",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 10,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/app.py",
+        "src/webhookrelay/delivery.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-04",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 8,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/transports.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-05",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/batch.py",
+        "src/webhookrelay/replay.py",
+        "src/webhookrelay/transports.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-06",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 10,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/rendering.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-07",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 7,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/rendering.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-dep-08",
+      "repo": "webhookrelay",
+      "category": "dependency_upgrade",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 6,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 1,
+        "errors": 0
+      },
+      "solution_files": [
+        "requirements.txt",
+        "src/webhookrelay/plugins.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-mig-01",
+      "repo": "webhookrelay",
+      "category": "deprecated_api_migration",
+      "split": "dev",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 9,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 9,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/clock.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-mig-02",
+      "repo": "webhookrelay",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/batch.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-mig-03",
+      "repo": "webhookrelay",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/config.py",
+        "src/webhookrelay/delivery.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-mig-04",
+      "repo": "webhookrelay",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 14,
+      "acceptance_at_base": {
+        "exit_code": 2,
+        "kind": "collection_error",
+        "failures": 0,
+        "errors": 1
+      },
+      "solution_files": [
+        "src/webhookrelay/payloads.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-mig-05",
+      "repo": "webhookrelay",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 4,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 4,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/scheduler.py"
+      ]
+    },
+    {
+      "id": "webhookrelay-mig-06",
+      "repo": "webhookrelay",
+      "category": "deprecated_api_migration",
+      "split": "heldout",
+      "valid": true,
+      "problems": [],
+      "base_tests": 64,
+      "acceptance_tests": 5,
+      "acceptance_at_base": {
+        "exit_code": 1,
+        "kind": "test_failure",
+        "failures": 5,
+        "errors": 0
+      },
+      "solution_files": [
+        "src/webhookrelay/payloads.py"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+id: releasebot-dep-02
+repo: releasebot
+category: dependency_upgrade
+split: dev
+title: Upgrade ruamel.yaml to 0.18.6
+request: |
+  We are standardising all release tooling on ruamel.yaml 0.18 (the 0.17 series no longer receives
+  fixes and our other tools already moved). Please upgrade ruamel.yaml from 0.17.21 to 0.18.6 and pin it
+  exactly in requirements.txt (`ruamel.yaml==0.18.6`).
+
+  Everything that touches `.releasebot.yml` must keep working: loading and validating the configuration
+  (including the error raised for broken YAML), and `releasebot publish` recording the released version
+  back into the file without destroying the user's comments or key order.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  ruamel.yaml 0.18 turned the module-level load/dump functions (safe_load, round_trip_load,
+  round_trip_dump) used in releasebot.config into errors (AttributeError); the YAML() instance API must be
+  used instead. Acceptance checks the pinned version, parsing of a full configuration (flow mappings,
+  anchors), error handling, round-trip version updates and the publish command writing the version.

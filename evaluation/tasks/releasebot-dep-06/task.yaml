@@ -1,0 +1,20 @@
+id: releasebot-dep-06
+repo: releasebot
+category: dependency_upgrade
+split: heldout
+title: Upgrade httpx to 0.28.1
+request: |
+  httpx 0.23 pulls in httpcore 0.16, which is flagged by our dependency scanner (h11 request smuggling
+  advisory) and blocks other upgrades. Please upgrade httpx from 0.23.3 to 0.28.1 and pin it exactly in
+  requirements.txt (`httpx==0.28.1`).
+
+  The hosting API client must behave as before: paginated listings that follow `Link: rel="next"`
+  headers, creating releases with the token header, a missing release returning `None`, HTTP and
+  connection problems raised as `HostingError`, and — important for our self-hosted runners — the
+  `hosting.proxy` setting from `.releasebot.yml` must still route API traffic through that proxy.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  httpx 0.28 removed the `proxies=` client argument (deprecated in 0.26 in favour of `proxy=`/`mounts=`);
+  releasebot.hosting passes it unconditionally, so constructing any HostingClient raises TypeError.
+  Acceptance checks the pinned version, the API behaviour against MockTransport, the hosting publisher,
+  and proxy routing with a real forward proxy listening on 127.0.0.1 (loopback works in the sandbox).

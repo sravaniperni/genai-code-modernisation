@@ -1,0 +1,35 @@
+id: ledgerkit-mig-06
+repo: ledgerkit
+category: deprecated_api_migration
+split: heldout
+title: Fix tarfile and shutil deprecations in ledger backups
+request: |
+  `ledgerkit.backup` relies on two deprecated standard-library APIs. Restoring a backup emits
+
+      DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or
+      modify their metadata. Use the filter argument to control this behavior.
+
+  which makes restores fail in CI, where DeprecationWarnings are errors. The module also passes the
+  `onerror` argument to `shutil.rmtree()`, deprecated since Python 3.12 in favour of `onexc` (Python 3.13
+  warns "onerror argument is deprecated, use onexc instead" at runtime). Please migrate both call sites
+  to the current APIs.
+
+  Requirements:
+
+  * backups written by `create_backup()` keep restoring to an identical ledger;
+  * archives containing members that would be written outside the extraction directory (`..` path
+    components, symlinks or hard links pointing outside it) must make `restore_backup()` raise
+    `BackupError`, and nothing may be written outside the extraction directory;
+  * the temporary directories used by `create_backup()`/`restore_backup()` are still removed afterwards,
+    also when a restore fails;
+  * `remove_tree()` stays best-effort: anything it cannot delete is logged as a WARNING that names the
+    path and the error, and it never raises.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  restore_backup() calls TarFile.extractall() without a filter (runtime DeprecationWarning on 3.12) and
+  remove_tree() passes onerror= to shutil.rmtree (deprecated in 3.12, runtime warning only from 3.13;
+  onexc handlers receive the exception instance instead of exc_info). Acceptance runs with
+  DeprecationWarnings as errors and checks round trips, rejection of path-traversal and link members
+  (nothing written outside), temp-dir cleanup, the logging of undeletable files, and that onerror= is gone.

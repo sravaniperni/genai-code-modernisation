@@ -1,0 +1,8 @@
+# Test runners installed into sandbox environments (pytest 8.3.5 has no lower bound on packaging;
+# pytest 9 requires packaging>=22, so both are kept and pip picks a compatible one).
+pytest==8.3.5
+pytest==9.1.1
+iniconfig==2.3.1
+pluggy==1.7.0
+pygments==2.21.0
+packaging==26.3

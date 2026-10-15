@@ -1,0 +1,29 @@
+id: ledgerkit-dep-03
+repo: ledgerkit
+category: dependency_upgrade
+split: heldout
+title: Upgrade pydantic to 2.11.7
+request: |
+  The HTTP API service that embeds ledgerkit is moving to pydantic 2 and cannot install two pydantic
+  majors side by side. Please upgrade pydantic from 1.10.21 to 2.11.7 and pin it exactly
+  (`pydantic==2.11.7`) in requirements.txt.
+
+  The service validates payloads with our models directly (`EntryIn.model_validate(...)`,
+  `model_dump()`), and its test suite turns pydantic's V1-compatibility deprecation warnings
+  (`PydanticDeprecatedSince20`) into errors — so `ledgerkit.schemas` has to use the native pydantic 2
+  API, not the deprecated V1-style one (and not the `pydantic.v1` shim).
+
+  Validation behaviour of `parse_entry()` / `entry_payload()` must not change: surrounding whitespace is
+  stripped from string fields, unknown fields are rejected, account codes are 3–6 digits, currencies are
+  three upper-case letters from our currency table, amounts are non-negative with at most 6 decimal
+  places, each posting has exactly one side, an entry needs at least two postings and must balance per
+  currency, and every problem is reported in the `FormatError` message as `"<field path>: <message>"`.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::pydantic.warnings.PydanticDeprecatedSince20"]
+notes: |
+  pydantic 2 rejects constr(regex=...) (renamed pattern) and root validators without skip_on_failure,
+  ignores the renamed Config key anystr_strip_whitespace (str_strip_whitespace), and deprecates
+  validator/class Config/min_items/parse_obj/dict. Acceptance checks the installed version, native v2
+  models (model_validate/model_dump on pydantic.BaseModel subclasses, PydanticDeprecatedSince20 as error),
+  and every validation rule including whitespace stripping before pattern checks.

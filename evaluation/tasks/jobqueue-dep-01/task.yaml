@@ -1,0 +1,23 @@
+id: jobqueue-dep-01
+repo: jobqueue
+category: dependency_upgrade
+split: dev
+title: Upgrade SQLAlchemy to 2.0.36
+request: |
+  Our platform team is standardising every service on SQLAlchemy 2.0, and the shared database tooling we
+  are moving to refuses to install next to SQLAlchemy 1.4. Upgrade SQLAlchemy from 1.4.54 to 2.0.36 and pin
+  it exactly in requirements.txt (`SQLAlchemy==2.0.36`).
+
+  `SQLJobStore` must keep working exactly as it does today on the new version: adding, loading and
+  updating jobs, claiming the next due job (priority first, then submission order), listing and filtering,
+  counting by state, unique-key lookups, and use from several worker threads at once. Jobs written through
+  one store instance must be visible to another store opened on the same database file, i.e. every change
+  has to be durably committed. The declarative `JobRecord` model (our reporting jobs query it through an ORM
+  session) and the admin CLI, which uses the SQL store, must keep working too.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  SQLAlchemy 2.0 removed Engine.execute (and library-level autocommit), the list form of select([...]) and
+  string indexing of Row objects; declarative_base moved to sqlalchemy.orm. The baseline sqlstore.py relies on
+  all of these. Acceptance checks the installed version, every store operation on an in-memory database,
+  durability across two stores on one sqlite file (catches missing commits), concurrent claiming from
+  threads, an explicitly supplied engine, the ORM mapping and the CLI on a file database.

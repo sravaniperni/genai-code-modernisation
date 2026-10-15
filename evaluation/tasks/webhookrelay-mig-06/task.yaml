@@ -1,0 +1,30 @@
+id: webhookrelay-mig-06
+repo: webhookrelay
+category: deprecated_api_migration
+split: heldout
+title: Stop truth-testing ElementTree elements in the XML payload parser
+request: |
+  Every XML webhook we receive (our CI system and two legacy ERP senders post XML) logs
+
+    DeprecationWarning: Testing an element's truth value will raise an exception in future versions.
+    Use specific 'len(elem)' or 'elem is not None' test instead.
+
+  from `webhookrelay.payloads.parse_xml`. Python 3.12 deprecates truth-testing `xml.etree.ElementTree`
+  elements (an element with no children is falsy even though it exists), and future versions will raise.
+  Please fix the parser so it no longer truth-tests elements.
+
+  The parsed result must stay exactly the same for the payloads we receive: root attributes become
+  `_`-prefixed keys, the payload comes from the `<data>` element when there is one (otherwise from the
+  root's children), a `<headers>` block becomes `_headers` (and is merged into the event headers by
+  `normalise`), elements with children become dicts, repeated tags become lists, and leaf elements become
+  their stripped text.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  Start state: parse_xml uses `if headers:`, `root.find("data") or root` and `if not element:` (leaf
+  detection). The last one is a children check, so replacing it with an `is None` test would turn every leaf
+  into a dict; the other two are presence checks. Acceptance (DeprecationWarning as error) parses envelopes
+  with and without <data>, nested/repeated/leaf/blank elements, header blocks, routing on XML-supplied
+  headers, and normalise() type/id extraction. Edge cases where the old truthiness semantics were ambiguous
+  (empty <data/> or <headers/> elements) are deliberately not tested.

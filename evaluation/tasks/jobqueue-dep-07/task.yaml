@@ -1,0 +1,21 @@
+id: jobqueue-dep-07
+repo: jobqueue
+category: dependency_upgrade
+split: heldout
+title: Upgrade click to 8.1.7
+request: |
+  Our ops tooling bundles the `jobqueue` admin CLI with other click-based tools that all require click 8,
+  and click 7.1.2 has been unmaintained for years. Upgrade click from 7.1.2 to 8.1.7 and pin it exactly in
+  requirements.txt (`click==8.1.7`).
+
+  The admin CLI must keep working the same way: every command (`enqueue`, `list`, `export`), the `--db`
+  option and `JOBQUEUE_DB` variable, closing the job store the CLI opened once a command has finished,
+  `list` output cut to the terminal width (honouring `COLUMNS`), and shell completion of `--queue` values
+  from the queues present in the database.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+notes: |
+  click 8.1 removed Group.resultcallback (now result_callback), the autocompletion= parameter (replaced by
+  shell_complete= with a (ctx, param, incomplete) signature) and click.get_terminal_size; the baseline cli.py
+  uses all three, so the module no longer imports. Acceptance checks the version, all commands, the
+  result callback closing an owned store (file database via --db and JOBQUEUE_DB), terminal-width
+  truncation and --queue completion driven through click's bash completion protocol.

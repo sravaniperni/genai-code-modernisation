@@ -1,0 +1,26 @@
+id: jobqueue-mig-03
+repo: jobqueue
+category: deprecated_api_migration
+split: heldout
+title: Stop calling asyncio.get_event_loop() without a running loop
+request: |
+  `jobqueue.aio.run_coroutine()`, which the executor uses to run `async def` handlers from synchronous code,
+  calls `asyncio.get_event_loop()` when no event loop is running. On Python 3.12 that emits
+  `DeprecationWarning: There is no current event loop` (and the implicit loop creation is going away), so with
+  `-W error::DeprecationWarning` every coroutine handler executed from the main thread fails.
+
+  Please replace the deprecated pattern. The behaviour must stay the same: coroutine handlers run to
+  completion and return their result both from the main thread and from worker threads (including several
+  worker threads at once), through `run_coroutine()`, `run_handler()`, the `Executor` and the `WorkerPool`;
+  calling `run_coroutine()` while an event loop is already running in the current thread still raises
+  `RuntimeError` without leaving the passed coroutine un-awaited; and normal asyncio code that runs afterwards
+  (for example `asyncio.run()`) keeps working.
+allowed_paths: ["src/**", "tests/**", "requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+acceptance:
+  pytest_args: ["-W", "error::DeprecationWarning"]
+notes: |
+  The setup overlay makes run_coroutine() use asyncio.get_event_loop() (falling back to new_event_loop() in
+  worker threads). On 3.12 the main-thread call warns when no loop is set. The acceptance tests reset the
+  event loop policy before each test so the warning is emitted deterministically regardless of test order,
+  and check main-thread, worker-thread, executor and pool execution, nesting inside a running loop, coroutine
+  cleanup, and that get_event_loop() is gone from aio.py.
