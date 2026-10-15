@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- project-specific -----------------------------------------------------------------------------------
+# Local runtime data: repository mirrors, workspaces, environments, wheelhouse, traces
+.data/
+# Frontend dependencies and build output
+node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+# The default Python template ignores lib/; keep frontend source directories that use that name
+!frontend/src/lib/

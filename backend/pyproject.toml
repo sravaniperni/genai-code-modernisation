@@ -1,0 +1,96 @@
+[project]
+name = "modernisation"
+version = "0.1.0"
+description = "Agentic software maintenance platform: repository intelligence, planned code changes, sandboxed verification, and reviewable pull requests."
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = [
+    # HTTP API layer
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    # Validated domain objects, structured LLM outputs, settings
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    # Persistence (PostgreSQL) and schema migrations
+    "sqlalchemy>=2.0.30",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    # Outbound HTTP for LLM providers and the GitHub REST API
+    "httpx>=0.27",
+    # Syntax-tree parsing for repository intelligence
+    "tree-sitter>=0.23",
+    "tree-sitter-python>=0.23",
+    # Benchmark task definitions
+    "pyyaml>=6.0",
+    # Tracing (OpenTelemetry-compatible spans for jobs, model calls, tool runs)
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+]
+
+[project.scripts]
+modernisation = "modernisation.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-timeout>=2.3",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML>=6.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/modernisation"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = [
+    "S101",  # assert is fine in tests and invariants
+    "S603",  # subprocess calls are deliberate; arguments are lists, never shell strings
+    "S607",  # git/python are resolved from PATH on purpose
+    "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108", "S311", "B017", "E501"]
+# /tmp inside the sandbox is a private, size-limited tmpfs, not the host /tmp
+"src/modernisation/execution/sandbox.py" = ["S108"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+packages = ["modernisation"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["tree_sitter_python.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+timeout = 300
+markers = [
+    "postgres: requires a reachable PostgreSQL (DATABASE_URL)",
+    "sandbox: requires bubblewrap user-namespace sandboxing",
+    "live_llm: requires a reachable model endpoint (MODEL_BASE_URL)",
+    "slow: long-running tests",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
